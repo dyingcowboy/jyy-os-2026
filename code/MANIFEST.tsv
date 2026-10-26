@@ -1,0 +1,84 @@
+demo	title	lectures	source_url	local_path	file_count	size_bytes
+concurrency/alipay	山寨支付宝	13	https://jyywiki.cn/OS/demos/concurrency/alipay/	demos/concurrency/alipay/	3	853
+concurrency/cgraph-mutex	使用互斥锁实现计算图	15,16	https://jyywiki.cn/OS/demos/concurrency/cgraph-mutex/	demos/concurrency/cgraph-mutex/	3	1504
+concurrency/cgraph-sem	使用信号量实现计算图	16	https://jyywiki.cn/OS/demos/concurrency/cgraph-sem/	demos/concurrency/cgraph-sem/	3	1290
+concurrency/cli	尝试关闭中断	14	https://jyywiki.cn/OS/demos/concurrency/cli/	demos/concurrency/cli/	3	688
+concurrency/coroutine	轻量级线程的实现	19	https://jyywiki.cn/OS/demos/concurrency/coroutine/	demos/concurrency/coroutine/	6	6499
+concurrency/cpu-ilp	指令级并行 (ILP)	20	https://jyywiki.cn/OS/demos/concurrency/cpu-ilp/	demos/concurrency/cpu-ilp/	4	10098
+concurrency/deadlock	死锁演示	17	https://jyywiki.cn/OS/demos/concurrency/deadlock/	demos/concurrency/deadlock/	4	1511
+concurrency/fish	奇怪的同步问题	15	https://jyywiki.cn/OS/demos/concurrency/fish/	demos/concurrency/fish/	3	1715
+concurrency/gl-shader	OpenGL Shader	20	https://jyywiki.cn/OS/demos/concurrency/gl-shader/	demos/concurrency/gl-shader/	3	2580
+concurrency/join-sem	使用信号量实现线程 join	16	https://jyywiki.cn/OS/demos/concurrency/join-sem/	demos/concurrency/join-sem/	5	1299
+concurrency/llm-request	一个 LLM Request	21	https://jyywiki.cn/OS/demos/concurrency/llm-request/	demos/concurrency/llm-request/	2	1537
+concurrency/lockdep	lockdep	17	https://jyywiki.cn/OS/demos/concurrency/lockdep/	demos/concurrency/lockdep/	6	7729
+concurrency/mandelbrot-cu	CUDA 实现的 Mandelbrot Set	20	https://jyywiki.cn/OS/demos/concurrency/mandelbrot-cu/	demos/concurrency/mandelbrot-cu/	4	5492
+concurrency/mandelbrot-go	Mandelbrot-Go	19	https://jyywiki.cn/OS/demos/concurrency/mandelbrot-go/	demos/concurrency/mandelbrot-go/	2	2651
+concurrency/mandelbrot	绘制 Mandelbrot Set	18	https://jyywiki.cn/OS/demos/concurrency/mandelbrot/	demos/concurrency/mandelbrot/	3	3095
+concurrency/mem-model	宽松内存模型	13	https://jyywiki.cn/OS/demos/concurrency/mem-model/	demos/concurrency/mem-model/	3	2649
+concurrency/orchestra	实现乐团同步	15	https://jyywiki.cn/OS/demos/concurrency/orchestra/	demos/concurrency/orchestra/	6	8029
+concurrency/pc-sem	使用信号量实现生产者-消费者问题	16	https://jyywiki.cn/OS/demos/concurrency/pc-sem/	demos/concurrency/pc-sem/	3	1095
+concurrency/peterson	Peterson 算法	14	https://jyywiki.cn/OS/demos/concurrency/peterson/	demos/concurrency/peterson/	3	2064
+concurrency/philosophers	哲学家吃饭问题	16	https://jyywiki.cn/OS/demos/concurrency/philosophers/	demos/concurrency/philosophers/	3	1363
+concurrency/producer-consumer	生产者-消费者问题	15	https://jyywiki.cn/OS/demos/concurrency/producer-consumer/	demos/concurrency/producer-consumer/	8	4692
+concurrency/sum-experiment	使用不同方式求和	14,18	https://jyywiki.cn/OS/demos/concurrency/sum-experiment/	demos/concurrency/sum-experiment/	11	124837
+concurrency/sum-mutexapi	使用 mutex API 实现互斥	13,14	https://jyywiki.cn/OS/demos/concurrency/sum-mutexapi/	demos/concurrency/sum-mutexapi/	3	742
+concurrency/sum-spinlock	使用硬件原子指令实现互斥	14	https://jyywiki.cn/OS/demos/concurrency/sum-spinlock/	demos/concurrency/sum-spinlock/	3	1027
+concurrency/therac-25	Therac-25 模拟器	17	https://jyywiki.cn/OS/demos/concurrency/therac-25/	demos/concurrency/therac-25/	3	14785
+concurrency/thread-cost	线程的代价	19	https://jyywiki.cn/OS/demos/concurrency/thread-cost/	demos/concurrency/thread-cost/	7	26220
+concurrency/thread-examples	通过线程库理解线程行为	13	https://jyywiki.cn/OS/demos/concurrency/thread-examples/	demos/concurrency/thread-examples/	4	2008
+concurrency/thread-lib	迷你线程库	13	https://jyywiki.cn/OS/demos/concurrency/thread-lib/	demos/concurrency/thread-lib/	5	3625
+concurrency/tls	Thread-local Storage	18	https://jyywiki.cn/OS/demos/concurrency/tls/	demos/concurrency/tls/	3	697
+concurrency/tsan	ThreadSanitizer	17	https://jyywiki.cn/OS/demos/concurrency/tsan/	demos/concurrency/tsan/	5	10739
+concurrency/web	Web 和事件编程	19	https://jyywiki.cn/OS/demos/concurrency/web/	demos/concurrency/web/	3	27472
+intro/ccompile	什么是编译器	2	https://jyywiki.cn/OS/demos/intro/ccompile/	demos/intro/ccompile/	3	1191
+intro/cih	CIH 病毒	3	https://jyywiki.cn/OS/demos/intro/cih/	demos/intro/cih/	3	48801
+intro/cinterp	C 解释执行器	2	https://jyywiki.cn/OS/demos/intro/cinterp/	demos/intro/cinterp/	4	8334
+intro/cpu-reset	探索 CPU Reset	3	https://jyywiki.cn/OS/demos/intro/cpu-reset/	demos/intro/cpu-reset/	9	2759
+intro/debug-firmware	调试 SeaBIOS 固件	3	https://jyywiki.cn/OS/demos/intro/debug-firmware/	demos/intro/debug-firmware/	3	1337
+intro/hanoi-nr	汉诺塔	1,2,6	https://jyywiki.cn/OS/demos/intro/hanoi-nr/	demos/intro/hanoi-nr/	5	3768
+intro/logisim	数字电路模拟器	1	https://jyywiki.cn/OS/demos/intro/logisim/	demos/intro/logisim/	5	5508
+intro/mini-rv32ima	RISC-V 处理器模拟器	1,2,3,20	https://jyywiki.cn/OS/demos/intro/mini-rv32ima/	demos/intro/mini-rv32ima/	10	25202
+intro/minimal	最小可执行文件	2	https://jyywiki.cn/OS/demos/intro/minimal/	demos/intro/minimal/	4	2339
+intro/opensbi	OpenSBI	3	https://jyywiki.cn/OS/demos/intro/opensbi/	demos/intro/opensbi/	431	1982760
+intro/os-minimal	最小 “操作系统”	4	https://jyywiki.cn/OS/demos/intro/os-minimal/	demos/intro/os-minimal/	2	3981
+intro/stackoverflow	Stack Buffer Overflow	28	https://jyywiki.cn/OS/demos/intro/stackoverflow/	demos/intro/stackoverflow/	4	3784
+mosaic	操作系统模型和检查器	14	https://jyywiki.cn/OS/demos/mosaic/	demos/mosaic/	11	23754
+persistence/bio	打开 Linux Block I/O	23,25	https://jyywiki.cn/OS/demos/persistence/bio/	demos/persistence/bio/	5	25589
+persistence/ccheck	Crash Consistency Checker	26	https://jyywiki.cn/OS/demos/persistence/ccheck/	demos/persistence/ccheck/	3	99977
+persistence/ext4	Debug File Systems	26	https://jyywiki.cn/OS/demos/persistence/ext4/	demos/persistence/ext4/	2	16844
+persistence/ggmaker	Symlink Game	24,25	https://jyywiki.cn/OS/demos/persistence/ggmaker/	demos/persistence/ggmaker/	16	919699
+persistence/globbing	globbing	24	https://jyywiki.cn/OS/demos/persistence/globbing/	demos/persistence/globbing/	2	540
+persistence/gpio-led	GPIO LED	22	https://jyywiki.cn/OS/demos/persistence/gpio-led/	demos/persistence/gpio-led/	3	2033
+persistence/kvm	KVM Device	22	https://jyywiki.cn/OS/demos/persistence/kvm/	demos/persistence/kvm/	3	5573
+persistence/launcher	一个设备驱动程序	22	https://jyywiki.cn/OS/demos/persistence/launcher/	demos/persistence/launcher/	4	5210
+persistence/lvm	Logic Volume Manager	26	https://jyywiki.cn/OS/demos/persistence/lvm/	demos/persistence/lvm/	3	4763
+persistence/mmds	Memory-mapped 数据结构	27	https://jyywiki.cn/OS/demos/persistence/mmds/	demos/persistence/mmds/	3	8199
+persistence/overlay	OverlayFS	25	https://jyywiki.cn/OS/demos/persistence/overlay/	demos/persistence/overlay/	3	4730
+persistence/postscript	PostScript	22	https://jyywiki.cn/OS/demos/persistence/postscript/	demos/persistence/postscript/	3	7452
+persistence/readfat	readfat	26	https://jyywiki.cn/OS/demos/persistence/readfat/	demos/persistence/readfat/	5	41977
+persistence/watchdog	watchdog	25	https://jyywiki.cn/OS/demos/persistence/watchdog/	demos/persistence/watchdog/	3	2179
+persistence/webcam	WebCam	22	https://jyywiki.cn/OS/demos/persistence/webcam/	demos/persistence/webcam/	3	4799
+virtualization/addr-space	探索进程地址空间	6	https://jyywiki.cn/OS/demos/virtualization/addr-space/	demos/virtualization/addr-space/	2	6280
+virtualization/bloat	动态链接库是进程间共享的吗？	11	https://jyywiki.cn/OS/demos/virtualization/bloat/	demos/virtualization/bloat/	4	1323
+virtualization/crazy-os	Crazy OS	5,6,7	https://jyywiki.cn/OS/demos/virtualization/crazy-os/	demos/virtualization/crazy-os/	7	23976
+virtualization/execve-demo	理解 execve	5	https://jyywiki.cn/OS/demos/virtualization/execve-demo/	demos/virtualization/execve-demo/	3	862
+virtualization/exit-demo	理解 exit	5	https://jyywiki.cn/OS/demos/virtualization/exit-demo/	demos/virtualization/exit-demo/	3	1380
+virtualization/filedesc	文件描述符	7	https://jyywiki.cn/OS/demos/virtualization/filedesc/	demos/virtualization/filedesc/	3	1103
+virtualization/fle	Funny Little Executable	11	https://jyywiki.cn/OS/demos/virtualization/fle/	demos/virtualization/fle/	8	13277
+virtualization/fork-demo	理解 fork()	5	https://jyywiki.cn/OS/demos/virtualization/fork-demo/	demos/virtualization/fork-demo/	3	967
+virtualization/fork-dfs	fork-based DFS	5	https://jyywiki.cn/OS/demos/virtualization/fork-dfs/	demos/virtualization/fork-dfs/	4	53249
+virtualization/knight	金山游侠	6	https://jyywiki.cn/OS/demos/virtualization/knight/	demos/virtualization/knight/	3	7336
+virtualization/linux-minimal	最小 Linux	12,24	https://jyywiki.cn/OS/demos/virtualization/linux-minimal/	demos/virtualization/linux-minimal/	3	2098
+virtualization/linux	Linux	12	https://jyywiki.cn/OS/demos/virtualization/linux/	demos/virtualization/linux/	4	3883
+virtualization/minix	Minix	12	https://jyywiki.cn/OS/demos/virtualization/minix/	demos/virtualization/minix/	2	524
+virtualization/mmap	mmap 系统调用	6	https://jyywiki.cn/OS/demos/virtualization/mmap/	demos/virtualization/mmap/	3	1157
+virtualization/musl-demos	调试 “小程序”	9,10	https://jyywiki.cn/OS/demos/virtualization/musl-demos/	demos/virtualization/musl-demos/	15	10985
+virtualization/pipe	UNIX 管道	7	https://jyywiki.cn/OS/demos/virtualization/pipe/	demos/virtualization/pipe/	6	9904
+virtualization/pointers	重新理解指针	6	https://jyywiki.cn/OS/demos/virtualization/pointers/	demos/virtualization/pointers/	3	2333
+virtualization/proc-info	展示进程信息	5	https://jyywiki.cn/OS/demos/virtualization/proc-info/	demos/virtualization/proc-info/	4	21632
+virtualization/pstree	创建一棵进程子树	5	https://jyywiki.cn/OS/demos/virtualization/pstree/	demos/virtualization/pstree/	3	1950
+virtualization/shebang	Shebang	8,11	https://jyywiki.cn/OS/demos/virtualization/shebang/	demos/virtualization/shebang/	5	618
+virtualization/signal	信号处理	8	https://jyywiki.cn/OS/demos/virtualization/signal/	demos/virtualization/signal/	3	1145
+virtualization/testkit	TestKit 测试框架	7	https://jyywiki.cn/OS/demos/virtualization/testkit/	demos/virtualization/testkit/	5	16100
+virtualization/tty	理解终端	8	https://jyywiki.cn/OS/demos/virtualization/tty/	demos/virtualization/tty/	6	16744
+virtualization/wheel	变速齿轮	11	https://jyywiki.cn/OS/demos/virtualization/wheel/	demos/virtualization/wheel/	3	10166

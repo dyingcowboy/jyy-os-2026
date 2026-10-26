@@ -1,0 +1,50 @@
+#!/usr/bin/env bpftrace
+/*
+ * bio-trace.bt — 内核 Block I/O 生命周期追踪
+ *
+ * 附着三个内核 tracepoint，输出 JSON 行至 stdout:
+ *   I (Insert) — I/O 请求进入调度器队列（排队中）
+ *   D (Dispatch/Issue) — I/O 请求派发给设备驱动（在途）
+ *   C (Complete) — I/O 请求完成（已落盘）
+ *   R (Requeue) — I/O 请求重新排队
+ *
+ * 用法:
+ *   sudo bpftrace bio-trace.bt | python3 bio-tui
+ */
+
+BEGIN
+{
+    printf("{\"type\":\"ready\",\"ts\":%llu}\n", nsecs);
+}
+
+tracepoint:block:block_rq_insert
+{
+    $cmd = str(args->cmd);
+    printf("{\"type\":\"I\",\"ts\":%llu,\"dev\":%d,\"sector\":%lu,\"bytes\":%u,\"rwbs\":\"%s\",\"comm\":\"%s\",\"cmd\":\"%s\"}\n",
+        nsecs, args->dev, args->sector, args->bytes, args->rwbs, args->comm, $cmd);
+}
+
+tracepoint:block:block_rq_issue
+{
+    $cmd = str(args->cmd);
+    printf("{\"type\":\"D\",\"ts\":%llu,\"dev\":%d,\"sector\":%lu,\"bytes\":%u,\"rwbs\":\"%s\",\"comm\":\"%s\",\"cmd\":\"%s\"}\n",
+        nsecs, args->dev, args->sector, args->bytes, args->rwbs, args->comm, $cmd);
+}
+
+tracepoint:block:block_rq_complete
+{
+    printf("{\"type\":\"C\",\"ts\":%llu,\"dev\":%d,\"sector\":%lu,\"nr_sec\":%u,\"error\":%d,\"rwbs\":\"%s\"}\n",
+        nsecs, args->dev, args->sector, args->nr_sector, args->error, args->rwbs);
+}
+
+tracepoint:block:block_rq_requeue
+{
+    $cmd = str(args->cmd);
+    printf("{\"type\":\"R\",\"ts\":%llu,\"dev\":%d,\"sector\":%lu,\"nr_sec\":%u,\"rwbs\":\"%s\",\"cmd\":\"%s\"}\n",
+        nsecs, args->dev, args->sector, args->nr_sector, args->rwbs, $cmd);
+}
+
+END
+{
+    printf("{\"type\":\"done\",\"ts\":%llu}\n", nsecs);
+}

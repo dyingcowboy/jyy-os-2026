@@ -1,0 +1,530 @@
+# Crash Consistency Validation Made Easy
+
+Yanyan Jiang*, Haicheng Chen†, Feng Qin†, Chang Xu*, Xiaoxing Ma*, Jian Lu*
+
+* State Key Lab. for Novel Software Technology, Nanjing University, China
+* Dept. of Computer Science and Technology, Nanjing University, China
+† Dept. of Computer Science and Engineering, The Ohio State University, United States
+
+jiangyy@outlook.com, {chen.4800,qin.34}@osu.edu, {changxu,xxm,lj}@nju.edu.cn
+
+## ABSTRACT
+
+Software should behave correctly even in adverse conditions. Particularly, we study the problem of automated validation of crash consistency, i.e., file system data safety when systems crash. Existing work requires non-trivial manual efforts of specifying checking scripts and workloads, which is an obstacle for software developers. Therefore, we propose C³, a novel approach that makes crash consistency validation as easy as pressing a single button. With a program and an input, C³ automatically reports inconsistent crash sites. C³ not only exempts developers from the need of writing crash site checking scripts (by an algorithm that computes editing distance between file system snapshots) but also reduces the reliance on dedicated workloads (by test amplification). We implemented C³ as an open-source tool. With C³, we found 14 bugs in open-source software that have severe consequences at crash and 11 of them were previously unknown to the developers, including in highly mature software (e.g., GNU zip and GNU coreutils sort) and popular ones being actively developed (e.g., Adobe Brackets and TEXstudio).
+
+## CCS Concepts
+
+• Software and its engineering → Software reliability;
+
+## Keywords
+
+File system, crash consistency, software reliability
+
+## 1. INTRODUCTION
+
+### 1.1 Crash Consistency Validation
+
+Quality and reliable software is expected to behave correctly even in adverse conditions. Unfortunately, adverse conditions are relatively infrequent in practice and some may even be tricky that developers are not aware of their existence, leaving hidden “time bombs” in the software. Once such adverse conditions are triggered, the consequences can be entirely out of control--maybe as minor as a mobile-app crash (caused by an uncaught exception [30]) or as severe as causing billions dollars of economic cost (caused by a race condition in the blackout in 2003 [12]).
+
+¹ This work was done when Yanyan Jiang was a visiting student at The Ohio State University. Chang Xu and Xiaoxing Ma are the corresponding authors.
+
+[Figure 1: Workflow diagram of crash consistency validation. The existing workflow specified by the developer includes input/workload and a checker, with the application running on the file system/driver and a logger feeding a generator; results flow upward to a bug report. C³ adds test amplification to the input/workload path and a generic oracle fed by the generator, avoiding the need for a user-specified checker. Diagram labels include: Bug report; Specified by developer; Input/workload; Checker; Test amplification; Application; Generator; Generic oracle; File system/driver; Logger.]
+
+Figure 1: The workflow of crash consistency validation. White background cells denote the workflow of existing work [21, 28, 31]. In comparison, C³ introduces generic oracle (blue), test application (red) and avoids user-specified checker (dashed grey).
+
+In this paper, we focus on the particular issue of crash consistency [25], which is an important property for any software that persists data. Crash consistency requires the application data (e.g., documents, data, and configurations) to be recoverable even if the system crashes [22]. Crash consistency is of significant importance because (1) as the software becomes widespread, any issue will eventually be exposed simply because of the Law of large numbers; and (2) crash inconsistency may lead to severe consequences. It would be shocking if your favorite document editor destroys your paper draft when your pet accidentally hits the hardware reset button at file saving.
+
+However, developers oftentimes fail to provide crash consistency, as they often lack of knowledge on the crash behavior of the file operations and their underlying file system. Even experienced developers leave crash consistency bugs in their mature software systems [31].
+
+Crash consistency can be validated using semi-automatic tools that simulate the crash behavior of a file system [21, 28, 31]. These approaches share a common workflow (Figure 1): (1) the program under test (e.g., a database implementation) is fed with test inputs or workloads; (2) the program execution’s file system or I/O operations are logged; (3) simulated
+
+
+Table 1: Possible recovered crash sites of Ted text editor. A file is opened and saved once. Crash sites would be more complicated if multiple files are saved for multiple times and specifying of what are correct is a difficult task for its developer.
+
+| Category | Original File Status | Backup File Status | Consistent? | Explanation |
+|---|---|---|---|---|
+| C1 | unmodified | N/A | ✓ | save operation failed with the undamaged original file |
+| C2 | unmodified | corrupted | ✓ | the undamaged original file |
+| C3 | unmodified | up-to-date | ✓ | recoverable failure with the up-to-date backup file |
+| C4 | deleted | up-to-date | ✓ | up-to-date backup file |
+| C5 | deleted | corrupted | × | data loss |
+| C6 | up-to-date | N/A | ✓ | the up-to-date original file |
+
+crash file system images (crash sites) are generated using the log; and (4) each crash site is checked against a manually specified checking script (e.g., the database’s ACID checker) for crash consistency.
+
+While being effective in disclosing crash consistency bugs in data storage systems with well-defined crash semantics, existing approaches heavily rely on developers’ manual efforts, making them cumbersome to use in practice. To make crash consistency validation easy, the first challenge (test oracle) is that existing techniques require developers to specify checking scripts to determine consistency of a crash site. However, they have no idea of crash consistency and are not trained for specifying such property. The second challenge (test input) is that the existing test inputs, usually test cases for functional validation, may not be sufficient to reveal crash consistency bugs.
+
+## 1.2 How to Make it Easy?
+
+In this paper, we propose the Crash Consistency Checker (C³ for short) to automatically validate crash consistency of application software. C³ makes crash consistency validation as easy as clicking one button. Given a program with an input (usually a simple use case), C³ either certifies the execution to be crash-consistent or reports an inconsistent crash site for further inspection. We present the motivation, the challenges, and the overview of C³ in Section 2.
+
+To remove the manual efforts of writing checking scripts, we devise a generic test oracle at file system level (instead of application level) for validating whether a crash site is consistent. We observed that developers usually expect the file system snapshot after a meta-data operation (e.g., directory operations, file close, and fsync) to be consistent. Accordingly, we define crash sites that can be aligned with such a consistent snapshot via simple recovery operations to be consistent. The oracle fully automates the crash consistency validation procedure, exempting developers from writing the checking scripts that relates to the program semantics.
+
+Automating the validation is not sufficient to reveal many crash consistency bugs. We observed that a file system implementation may enforce crash consistency by chance (e.g., truncate and overwrite a small file), causing both manual-specified checking script and our generic oracle to miss a crash consistency bug. Such bugs can only be manifested by dedicated workloads (e.g., a sufficiently large input file), which are difficult for developers to provide in practice.
+
+To reduce the reliance on dedicated workloads, we further propose test amplification that injects benign file system synchronization operations in the middle of a program execution to break such accidental atomicity so that our generic test oracle can disclose more crash consistency bugs. Technical details are discussed in Section 3.
+
+We implemented C³ prototype tool, made it publicly available and open-source and hope it will help developers discover more crash consistency bugs early. Our C³ implementation adopts non-intrusive system call instrumentation and virtual device that are transparent to the program and the file system. Almost any program written in any language running on any file system can be validated by our tool. The implementation decisions are discussed in Section 4.
+
+We conducted experiments on 25 popular open-source programs to evaluate the effectiveness and efficiency of C³. We discovered crash consistency bugs in 14 subjects, where 11 were previously unknown (7 cannot be manifested without our test amplification). All the bugs lead to severe consequences (data loss or corruption). Some bugs are from highly mature software (e.g., GNU zip, GNU coreutils sort) or from popular ones under active development (e.g., GitHub Atom, Adobe Brackets, and jEdit). Evaluation results also show that C³ is easy to use and consumes affordable resources. The evaluation is presented in Section 5.
+
+Finally, we summarize the lessons learned in our experiments and communications with the open-source community in Section 6 followed by related work and conclusion in Sections 7 and 8 respectively.
+
+# 2. C³ IN A NUTSHELL
+
+## 2.1 Two Motivating Examples
+
+We demonstrate the challenges of crash consistency validation by two real-world crash consistency bugs discovered by C³, both were previously unknown and have severe consequences. Inconsistent crash sites can be manifested on a typical Linux distribution with ext4 file system with default settings, which represents a typical user’s environment.
+
+### 2.1.1 Ted Text Editor
+
+Productivity software manages user data such as documents, photos and settings. Such contents should be handled with extreme care, as corrupting them can lead to catastrophic consequences. The following (simplified) file-saving code is from the Ted text editor on Android, which has more than 100K installations:
+
+```
+1 backupPath = path + ".tmp";
+2 TextFileUtils.writeTextFile(backupPath,
+      content);
+3 deleteItem(path);
+4 renameItem(backupPath, path);
+```
+
+
+At a first glance, this code seems to be crash-safe: file contents are first saved to a temporary file; the original file is then deleted, followed by a renaming of the temporary file. The developer expected that, whenever the system crashes, at least one from the original file and the backup file will remain in the file system.
+
+Such expectation lays on the assumption that each file system operation is processed *in-order* and immediately takes effect. Unfortunately, this assumption is not valid as both file system and device driver reorder requests for performance. There is no ordering guarantee between the system calls `write` (in `TextFileUtils.writeTextFile`) and `unlink` (in `deleteItem`), causing the original file being deleted before the backup file contents are persisted. The file system after crash recovery may contain a single corrupted file (0 byte), indicating a catastrophic data loss.
+
+To ensure the ordering between such file system operations in the example, one can either insert a file system flush call (`fsync`) after the file contents being written or remove the `deleteItem` line (ext4 file system on Android provides strong consistency guarantee for renaming). Our patch is already merged by the developer³.
+
+This example demonstrates the challenge of automatically deciding consistency of a crash site. In the example, even the simplest use case has six categories of crash sites (Table 1) and only one of them is inconsistent. Validating crash consistency is a non-trivial task for software developers because (1) developers often do not master the knowledge of crash consistency; (2) there can be many accesses to multiple files and consistency should be defined for every potential intermediate state; and, (3) file system accesses can be in libraries that are not well-understood. We address the challenge by proposing a generic oracle for automated crash site validation.
+
+### 2.1.2 GNU coreutils sort
+
+Sort is a command-line tool that prints input lines in sorted order, which appeared in the first version of Unix and is now provided by GNU’s core utilities.
+
+Sort is mostly used by pipeline and redirection. However, it still provides an option to write the results to a destination file (for backward compatibility of the old-time sort that sorts a file in-place). The developer community also considers sorting files in-place using `sort data -o data` a valid option and this solution received the highest votes by the viewers on StackOverflow⁴.
+
+Unfortunately, the practice (or option) of overwriting the source file for in-place sorting leads to potential data loss when the system crashes. The destination file is first opened and truncated to empty. If at this time system crashes or the disk runs out of space, contents in `data` are permanently lost. We reported this issue to the developers. They indicated that a completely safe and portable solution is difficult to work out (due to permission, owner, and hard-link issues) and the bug is currently fixed by explicitly documenting this dangerous behavior⁵.
+
+Surprisingly, if the input file is of small size, this bug cannot be triggered on the ext4 file system with the default setting. In all possible crash sites of a profiling run, the data file is either unmodified or up-to-date, because the file system implementation ensures the atomicity of a small-file overwrite. Neither manually-specified checkers nor our generic oracle can detect the crash consistency bug, unless dedicated workloads (e.g., large files) are provided.
+
+This example demonstrates the challenge of reducing the reliance on the dedicated workloads. Among all existing approaches [21, 28, 31], only Alice [21] has a chance to detect the bug without dedicated workloads. However, it relies on the correct abstract model of file systems. Alternatively, we address this challenge by test amplification that injects benign events in the middle of program execution.
+
+³ https://github.com/xgouchet/Ted/pull/45
+⁴ http://stackoverflow.com/questions/9117274
+⁵ http://debbugs.gnu.org/cgi/bugreport.cgi?bug=22769
+
+[Figure 2: Architectural overview diagram of the C³ approach. A “Program and test input” feeds the C³ system. Inside C³, “Test amplification” creates amplified runs and logs I/O events; “Consistent file system snapshot generation” uses a profile run to produce file system snapshots; “Crash site generation” performs bounded search; and “Crash consistency validation” compares crash sites (CS) against expected snapshots (ES). Several CS items align with ES and are marked with check marks, while one CS aligns with no ES and is marked with a cross, leading to a reported crash consistency bug. The diagram’s takeaway is that C³ combines amplification, crash-site generation, snapshot generation, and oracle validation to automatically identify crash-inconsistent states.]
+
+Figure 2: Architectural overview of our C³ approach. Blue, red and green components are discussed in Sections 3.1, 3.3, 3.4 and 3.2 respectively.
+
+## 2.2 Workflow of C³
+
+C³ adopts a methodology in crash consistency validation similar to that of storage stacks [21, 28, 31], decomposing the problem into three sub-problems:
+
+1. (Test input) Find suitable inputs/workloads that can reveal potential crash-inconsistent vulnerabilities.
+2. (Crash site generation) Derive possible crash sites for each test run.
+3. (Test oracle) Validate each crash site’s consistency.
+
+We explain the workflow of C³ in the following. The architectural overview of C³ is shown in Figure 2. The technical details are expanded in Section 3.
+
+### 2.2.1 Test Input
+
+The validation procedure of C³ is driven by the software’s functional tests/use cases which are easy to obtain. Recall that existing work use dedicated workloads to find bugs
+
+
+in storage stacks [21, 28, 31]. Such workloads are usually overkill for validating application software because applications have much simpler file system access patterns than a storage system (e.g., a database or a version-control system). C^3 also adopts test amplification to further reduce the reliance on dedicated workloads because file system implementation may keep atomicity of operations by chance (Section 2.1.2).
+
+2.2.2 Crash Site Generation
+
+C^3 takes the standard approach [28, 32] to generate simulated crash sites by intercepting I/O requests at runtime using a virtual RAM disk. We formally define the semantics of I/O requests and use this definition to derive all possible crash sites based on the specification of Linux block layer. Based on the observation that inconsistency can mostly be manifested by dropping a small number of metadata blocks, C^3 uses a bounded-search algorithm to generate crash sites. The algorithm enumerates the crash points and systematically drops a subset of the blocks, yielding crash sites to be validated. Each crash site is mounted in the local file system and validated by our generic oracle.
+
+2.2.3 Test Oracle
+
+The key idea of C^3 generic oracle is to make the expectation of software developers explicit, defining a set of consistent file system snapshots. Our observation is that programs are usually crash-consistent if file system operations has atomicity and persistence (otherwise the bug can be manifested without system crash, which is out of our scope). Accordingly, C^3 collects file system snapshots after metadata operations (directory operations, file close and fsync) and consider them to be consistent.
+
+C^3 certifies a crash site to be consistent if it has a small editing distance to a consistent snapshot, i.e., it can be transformed to a consistent snapshot via a series of simple recovery operations that do not involve out-of-thin-air content creation. In other words, starting from such a crash site, software users can easily fall back to a consistent state. Realizing that exact computation of editing distance is intractable, we adopt an alternative relaxed necessary condition that can be efficiently computed in C^3.
+
+3. VALIDATING CRASH CONSISTENCY
+
+In this section, we provide in-depth discussion of C^3 in a slightly different order than its workflow. We first discuss the definition of expected file system snapshots (ESs) and why they are consistent in Section 3.1, followed by how to obtain crash file system snapshots (CSs) in Section 3.2. Then, we show how to validate the consistency of a CS in Section 3.3. Finally, we discuss the design of test amplification in Section 3.4.
+
+3.1 Defining Consistent File System Snapshots
+
+When developers are manipulating user-generated contents, they usually do have considerations of data safety (e.g., Ted intentionally writes to the backup file). Therefore, the gap between developer’s expectation and actual implementation of file system consistency can lead to crash consistency bugs. File systems only provide simple interface for data management and do not have transactional semantics. As a result, the highest level of file system consistency is atomicity and persistence of system calls, as if each is issued in-order and immediately persisted to disk. File system implementations do provide such consistency semantics to its users, assuming the system never crashes. However, such consistency breaks at system crash because both file system and device driver are allowed to buffer and reorder I/O requests for maximized performance [21]. Unfortunately, this phenomenon is not well-understood by the developers and becomes the root cause of (unrealistic) expectations. For example, Ted developers expected buffered data to be always persisted to disk before file deletion takes effect but this is unfortunately not the case in the target platform’s file system implementation (ext4).
+
+Following this intuition, we assume that the program correctly handles crashes on a strongly consistent file system. In other words, we assume that developers do not make obvious data-safety mistakes that can be triggered without any system crash, e.g., deleting original file before backup is written.4 Particularly, it is reasonable to believe that developers have knowledge of the intermediate state after every metadata operation (directory operations, file close and fsync) because these operations cause significant changes to the file system state.
+
+Therefore, we consider file system snapshots of such intermediate states to be “expected” reference snapshots (Expected Snapshots, or ESs). ESs serve as the basis of defining consistency of a crash site. ESs are collected by a profiling run in which system calls are intercepted. After each file metadata operation, we pause the program and traverse the file system to obtain its snapshot. Back to the Ted example (Table 1), each of Categories 1, 3, 4, and 6 corresponds to a consistent file system snapshot after meta-data operation: program start (C1), close of backup file (C3), deletion of original file (C4), and renaming (C6).
+
+An ES consists of files in directories. We define an ES to be a set of tuples {(f1, c1),..., (fn, cn)} where fi denotes i-th file’s full path (e.g., /mnt/crashfs/file.txt) and ci denotes its contents. We flatten the tree structure because crash consistency focuses on safety of file contents. A file fi with contents ci = {b1, b2,..., bm} denotes that its size is m bytes and j-th byte value is bj. The profiling run returns E, the set of all ESs.
+
+3.2 Generating Crash Sites
+
+To generate crash sites for validation, we do not actually power off the machine. Rather, we take the standard approach of existing work [21, 28, 31] by keeping a log of I/O requests performed by the program and synthesizing crash sites at simulated crash points.
+
+Physical disks are not required to process I/O requests in their arrival order for performance, which is a major source of crash inconsistency [7, 21]. When file system requires ordering between operations, it invokes a disk barrier (indicated by a REQ_FLUSH or REQ_FUA flag in a Linux block I/O request) to flush pending requests to disk.
+
+To capture the effect of all possible request ordering, disk semantics is formalized as follows. A disk D is a mapping from sector identifier to its actual stored data. For each sector s ∈ {1, 2,...}, we use D(s) to reference its data. At runtime, there is an internal queue Q of requests pending to be flushed as well as auxiliary mappings U and V. U(i) and V(i) denotes i-th request’s sector identifier and data,
+
+4 There can be data loss if the program is killed in the middle.
+
+
+Algorithm 1: Crash snapshot generation algorithm
+Input: A sequence of I/O requests {e1,e2,...,en} and a search bound k
+Output: A set C containing crash snapshots
+1 C ← ∅;
+2 for j ∈ {1,...,n} ∧ ej is not a barrier do
+3     Let (D,Q = {ei,ei+1,...,ej},U,V) be the state after performing {e1,e2,...,ej} ({e1,...,ei−1} are persisted in D and events in Q are pending to be flushed);
+4     for ℓ ∈ {0,1,...,min{k,j−i+1}} do
+5         for P ⊆ {0,1,...,j−i−1} ∧ |P| = j−i−ℓ do
+6             Dc ← D;
+7             for s ∈ P ∪ {j−i} do
+8                 Dc ← Dc[U(i+s) ↦ V(i+s)];
+9             if Dc ∉ C then
+10                S ← mount(Dc);
+11                C ← C ∪ {S};
+
+respectively, and both are initially empty. A sequence of write and barrier request5 {e1,e2,...,en} are allowed to be performed on a disk with the following semantics.
+
+1. A write request W(s,d) to s-th sector with data d. Rather than being immediately persisted, the request is queued in Q. The notation A[x ↦ y] denotes map replacing, i.e., A[x ↦ y] = A \ (x,A(x)) ∪ (x,y):
+
+   ei = W(s,d)
+   (D,Q,U,V) ⇒ (D,Q ∪ {ei},U[i ↦ s],V[i ↦ d]).
+
+2. A barrier request B ensures all write operations before it to be persisted:
+
+   ei = B
+   Q = {ep,ep+1,...,eq}
+   Dp = D
+   Dk+1 = Dk[U(k) ↦ V(k)] (k ∈ {p,p+1,...,q})
+   (D,Q,U,V) ⇒ (Dq+1,∅,U,V)
+
+Finally, at any system state (D,Q,U,V), we allow the system to crash, yielding a set of valid crash disks Dcrash:
+
+   Q = {ei,ei+1,...,ej}
+   Di = {D}
+   Dk+1 = Dk ∪ {D[U(k) ↦ V(k)] | D ∈ Dk}
+   (D,Q,U,V) ⇒ Dcrash = Dj+1
+
+This crash model describes the exact contract between a disk driver and the Linux block I/O layer. It defines all possible outcomes of reordering (from a disk’s perspective, any effect of reordering is equivalent to dropping a subset of requests). Furthermore, our crash model assumes the physical disk to be reliable, i.e., persisted data never corrupts. Otherwise, unreliable physical disk (e.g., severe faults studied in [32]) may lead to crash sites that cannot be recovered.
+
+Algorithm 1 displays the crash site generation algorithm. Exhaustively enumerating all crash sites [28] is too time-consuming. Instead, we use a bounded-search algorithm based on the observation [31] that dropping only a few of critical I/O requests can manifest crash consistency bugs. We accordingly enumerate the point of system crash (Line 2) and those crash sites who drop at most k requests in the pending queue Q (Lines 4–8). The search bound k is adjustable: if the time budget is limited, we can bound k to be a small constant. A sufficiently large k is equivalent to an exhaustive enumeration.
+
+Generated disk images are mounted to the native file system and further checked for crash consistency. A crash file system snapshot (Crash Snapshot, or CS) is similar to an ES described in Section 3.1; the crash snapshot S = {(f1,c1)} denotes that file f1 has a contents of c1.
+
+3.3 Validating Crash Sites
+
+The key insight of our general oracle is based on the following case analysis of a crash site S:
+
+1. S is identical to a consistent ES S′ ∈ E. Our basic assumption of ES implies that S is consistent.
+2. We can transform S to S′ ∈ E by performing simple recovery steps that do not involve out-of-thin-air content creation. An example is C2 of Table 1 where a corrupted file may contain partial data and deleting corrupted backup file yields a consistent state. If we can obtain a consistent state from S regardless of program semantics, S should be consistent.
+3. Neither (1) nor (2) applies. In this case, non-trivial recovery scheme is required to fall back to a consistent state. If such scheme does not exist for general application software, S is highly likely to be inconsistent.
+
+This trichotomy yields a definition of crash consistency based on the editing distance [20] that avoids both false positives (reporting a recoverable non-ES crash site as inconsistent) and false negatives (failing to report inconsistent CSs). Formally, for a crash site S = {(f,c)}, to be consistent, there must exists an S′ = {(f′,c′)} ∈ E such that S can be transformed to S′ using a bounded number of following editing operations (assume that (f,c) ∈ S, c = [b1,b2,...,bm] and f′ can be arbitrary file-name other than f):
+
+1. Creation of an empty file: S → S ∪ {f′,ε}.
+2. Deletion of a file: S → S \ {(f,c)}.
+3. Renaming of a file: S → S \ {(f,c)} ∪ {(f′,c)}.
+4. Moving a consecutive segment of file contents: S → S \ {(f,c)} ∪ {(f′,c′) ∪ (f,[b1,...,bp−1,bq+1,...,bm])}, where [bp,...,bq] is a substring in the contents of file f′.
+
+This definition echoes the trichotomy: a CS is consistent only if it can be aligned with an ES with a small editing distance. Otherwise, a large or infinite6 editing distance indicates an impossible or highly non-trivial recovery and we have sufficient evidence to report it as inconsistent. Unfortunately, this particular version of editing distance is intractable. Interested readers can refer to our NP-Completeness proof in the auxiliary material.
+
+We discovered that a relaxed definition of alignment is already sufficient for crash consistency validation and can be efficiently computed. Particularly, we define a CS S to be consistent if S can be transformed to an ES S′ with a finite number of editing operations.
+
+This relaxed definition is equivalent to the existence of an injective mapping from every byte in the files of S to a byte in that of S′, simply because an unbounded number of
+
+5 Reads do not affect contents in the disk and we do not consider them in defining crash semantics.
+6 If it is impossible to transform a CS to an ES, the editing distance is infinite.
+
+
+editing operations allows bytes in S to be arbitrarily permuted, redistributed, and deleted. This relaxed property is also much easier to check. Formally, S is consistent only if there exists S′ ∈ E such that for every byte value σ,
+
+   ∑_{(f,c)∈S} |{j | cj = σ}| ≤ ∑_{(f,c)∈S′} |{j | cj = σ}|.
+
+This alternative definition of alignment naturally gives a linear time validation algorithm by comparing the number of each byte value’s occurrences.
+
+Finally, we argue that the relaxation is also effective in crash consistency validation. First, whenever a CS cannot be aligned with an ES in the relaxed definition, the editing distance must be infinite. Therefore, as long as the editing distance reports no false positive of crash inconsistency, so does the relaxed definition. In theory, the relaxed definition may misclassify an actually inconsistent CS as consistent, leading to potential false negatives. However, this is expected to be rare in practice, as reporting crash inconsistency only requires one witness and the relaxed condition fails to detect the issue only if it reports false negative on all CSs. There likely exists at least one inconsistent CS that is largely corrupted (e.g., file contests are mostly corrupted), so our relaxed condition tends to capture it and report the crash consistency bug.
+
+3.4 Amplifying Test Inputs
+
+In the GNU coreutils sort example (Section 2.1.2), the crash consistency bug cannot be manifested without dedicated workloads because the file system implementation ensures small-file overwrite’s atomicity by chance. However, such atomicity is not a guaranteed offer. If the file is sufficiently large, we can observe inconsistent crash sites that only contain partial data and cannot be aligned to any ES.
+
+To exempt the need of dedicated workloads (e.g., huge input files), we designed a test amplification approach. Recall the root cause of the hidden bug is (not guaranteed) atomicity of consecutive operations, we break such atomicity by injecting system-wide synchronization operation (sync) in the middle of a program execution. Such operations are totally benign, i.e., do not affect the application view of the file system, but can manifest the inconsistent intermediate crash sites.
+
+Test amplification is conducted in a single separated program execution called amplification run. In the amplification run, we intercept system calls that may silently lead to data loss (ftruncate and open, which are usually contained in library code of which developers are not aware) and inject a sync after each of them. The I/O request log collected for the amplification run is used for further crash site generation (Section 3.2) and consistency validation (Section 3.3).
+
+In the GNU coreutils sort example, test amplification injects a sync after the data file is truncated, yielding a CS that contains only an empty data file, which cannot be aligned to any ES and is correctly reported as a crash consistency bug.
+
+4. IMPLEMENTATION
+
+We implemented our C^3 approach as a prototype tool and made it public and open-source.7 Both the instrumentation and the I/O requests logger in C^3 are transparent to the
+
+```python
+@prepare
+def init_setup():
+    prepare_init_file()
+@run_program
+def start_program():
+    os.system("brackets") # execute program
+@delay(5.0)
+def do_edit():
+    edit_document()
+    keypress('ctrl-s') # save document
+    keypress('alt-f4') # exit program
+```
+
+Figure 3: Simplified test script for the Brackets text editor in which we found crash consistency bug. The figure shows a Python-style test script that prepares an initial file, launches Brackets, waits, edits the document, saves it with Ctrl-S, and exits with Alt-F4.
+
+file system. Therefore, C^3 can validate software written in any language, using any libraries, and running on any file system. The idea of C^3 can be also implemented on other systems (e.g., by using a simulated iSCSI device [31]). The rest of this section expands discussion of techniques used in our C^3 implementation.
+
+4.1 Test Input
+
+C^3 runs the program multiple times using the same test inputs. Test inputs are specified by test scripts, which are based on a series of decorated functions in Python (Figure 3). A test script provides means to specify (1) an initial file system snapshot; (2) how to load the program; and, (3) actions to be performed at program runtime. To further ease the testing procedure, we also developed a simple record tool [15] that captures system-level UI events and automatically synthesizes a test script for GUI software.
+
+For each amplification run, C^3 instruments the program using ptrace, intercepting the program’s control flow whenever a system call is about to execute. C^3 injects a synchronous sync call if a designated point is reached and then resumes the program execution.
+
+In this paper, we do not focus on how such inputs are obtained. Even though the program may be large and complicated, there usually are only a few places that interact with the file system. We believe that simple use cases are sufficient to reveal many crash consistency bugs and developers will have no obstacle providing test inputs that cover all file system operations.
+
+4.2 Crash Site Generation
+
+C^3 collects a I/O request log for crash site generation by a virtual RAM disk driver, which is similar to eXplode [28]. Before executing the test script, the virtual disk issues an ioctl call to the driver for capturing the initial snapshot of the virtual disk. During the test script execution, the virtual disk handles I/O requests like a normal RAM disk and at the same time keeps an internal copy of all write and barrier requests. After the termination of the test script, these logged data are dumped back to user space via another ioctl call and CSs are generated using Algorithm 1.
+
+C^3 can only validate consistency of file system snapshots on the virtual RAM disk. Therefore, test scripts should place files to be manipulated on the virtual disk. However, the program may also modify files whose paths are hard-coded to the local file system (e.g., /install/path/.config).
+
+7 Available at http://jiangyy.github.io/c3/.
+
+
+If developers also intended to validate each consistency of early work items, they can run tracer on the tracer.txt file side and then run the validator to automatically compute the results and generate the error logs.
+
+# 4.3 Test Oracle
+
+C³ collects the test oracle from another side of data files. After collecting the data from the task side, the test inputs are executed again on the validator side to generate results, which will be parsed and validated. If an extreme case triggers a crash under test, it is very difficult for developers to determine which code path was affected, whether it was due to the workload itself or the random input. Thus, we design a "new core" view to call all core files one after another, which makes it convenient for developers to locate crashes with backtrace information. After collecting the data (e.g., call graph and performance), we compare the results against the original data from the tracer side and consider the possible attributes that may contain bugs (e.g., crash and missing elements in call graphs). We did not consider performance as a violation of invariants due to the floating point overhead and dynamic scheduling, especially with a high degree of parallelism. To avoid the early termination from a crash (i.e., one of the core files crashes), the validator only calls each extreme case in sequence and runs it to completion or until failure. We add checkpoint and restore mechanism for each crash. For instance, if any extreme case (e.g., crash, timeout) is encountered, the validator will skip it and continue to the next one to finish all possible results. We also designed a further positive test: each time, selecting N (e.g., N = 16) random work items from the tracer side and comparing them to the validator side to check if any discrepancies were introduced. Again, this is accomplished according to the call graphs.
+
+# 4.4 Putting Them Together
+
+C³ consolidates all findings discussed in this section to re-rank and de-duplicate the generated test cases. The extreme cases that trigger performance violations, call graph changes, or crashes are likely to be bugs. First, we discard all extreme cases if their differences are zero (e.g., the same call graphs between the extreme case and its parent). The rest of the cases are ranked by the difference value (e.g., performance overhead and changes in the call graph). Second, we merge the extreme cases (and their parent cases) to remove the duplicates and create test suites for the rest of the main test process. If the difference is large and there are a large number of invariants between extreme cases and their parent cases, it is also meaningful to run these cases again and check if there are any possible bugs. Note that if there is no bug, we have already reported possible invariants (e.g., 32 out of 512 random inputs) that can be violated by a small subset of inputs. If developers want to know how many extreme cases exist (e.g., bug existence), they might decide to run the multiple rounds to collect as many as possible invariants, which is a little time-consuming. In this case, C³ will also reduce the tester's time, as only one round for the 512 random inputs. In our setup, we start by generating random inputs to check the time necessary (e.g., 4-8 hours) to minimize C³'s time costs. C³ will end the test and generate final reports if the number of distinct new cases (e.g., call graph changes, crash) that could be collected is less than 32. It will hold an extra test for the current round if only 16-32 new cases were collected. Therefore, to increase the test case number by 2x to 4x (e.g., 2 rounds), it only costs 10%-20% more than a fully randomized test (1x).
+
+We also evaluated C³'s efficiency and work product performance by comparing bug detection rates. To prove correctness and efficiency, we consider the total number of bug-triggered unique test cases that C³ produced, as well as the time to find bugs.
+
+---
+
+# 5. EVALUATION
+
+## 5.1 Methodology
+
+We evaluated the effectiveness, soundness, and performance of C³, answering the following three research questions: (1) whether C³ detects more vulnerabilities and exploits compared to random testing alone; (2) whether C³ detects de-anonymization to a surprising degree only by using persistent invariants and random inputs; and (3) how many distinct performance bugs exist, which was underestimated from the perspective of performance bugs caused by side-channel leaks and non-determinism. We designed a set of experiments to compare the performance of C³ with four randomized testing baselines: random differential testing, which is widely used and representative; a statistical-based approach inspired by [35] that selects more extreme cases (i.e., max and min based on variance); and C* (i.e., random-based search using execution feedback) to answer the question "is C³'s success due to the feedback loop or the search strategy?" We also added the no-invariant baseline in which the testers themselves decide whether a suspicious case should be further explored; this requires only one round of fuzz testing to find bugs and can be seen as supplementary information only.
+
+All evaluations were conducted on early information retrieval systems and 10 supplementary systems that fully support multithreading, including well-known libraries and real-world applications. We measured the following metrics: (1) effectiveness: number of detected bugs, number of confirmed CVEs, and time consumed for each case; (2) time consumed: total phase, graph phase, and search phase; (3) cost: number of tests, total number of inputs generated, the number of ranked cases, time per round, and time to find bugs; (4) overhead: space overhead and runtime overhead of collecting invariant information (e.g., TypeLib, LibASan, Libaegis and Libdet, and C++ sanitizers). In each experiment, we set a timeout of 24 hours and repeated the system tests and set up any available debugging capabilities to perform differential testing.
+
+For each subject, we ran 50 experiments: over 5 runs each using a separate random seed (5 seeds). We report one typical run: one run either from the standard benchmark program or the randomly selected one. For Smbios (Section 5), we specified the total number of invocations as approximately 1.2 billion; for the rest of the systems (Section 5.2), we used the invocations as approximately 10 million. For each program, we ensured the same number of tests were used for each baseline. If a system crashed, the random seed was saved, and the crash was verified by running it again, along with a differential call graph.
+
+The evaluations were conducted in a trace consistency environment to maximize testing reproducibility. We used the same Intel Xeon Gold 6330 CPU and 256GB DDR4 RAM running Ubuntu Linux. All experiments were conducted in parallel: 8 threads for the task side, while the remaining 120 threads provided processing raw inputs. To further demonstrate reproducibility, we decided to record all 50 runs of raw inputs.
+
+## 5.2 Evaluation Results
+
+### 5.2.1 Bug Effectiveness
+
+Bugs detected. We summarize all bugs found by C³ in Table 2: the table shows the number of bugs detected in each category or program for each of the fuzz testers. The numbers indicate how many distinct bugs were confirmed via backtracing and the time required to detect each bug (in minutes). We then confirmed where the bug lies in the test input and the developers patched the bug reports for all 114 subjects and the developers
+
+139
+
+
+Table 2: Crash consistency bugs discovered by C^3. Bug# denotes the bug/issue ID in the issue tracking system. A bold bug# indicates a previously unknown bug. The Amp. column indicates the bug can only be manifested with test amplification.
+
+| Type | Application | LOC | Language | Version | Bug# (tracker) | Amp. | Consequence | d [bytes] |
+|---|---:|---:|---|---:|---|:---:|---|---:|
+| Utility | GNU make | 39.0K | C | 4.1 | 46193 (savannah) | | Incorrect build | 7.33K |
+| Utility | GNU zip | 47.3K | C | 1.6 | 22770 (debugs) | | Data loss | 5.04K |
+| Utility | bzip2 | 8.12K | C | 1.0.6 | N/A (email) | | Data loss | 8.56K |
+| Utility | GNU coreutils sort | 4.65K | C | 8.21 | 22769 (debugs) | ✓ | Data loss | 23.9K |
+| Utility | Perl | 801K | C | 5.22 | 127663 (perlbug) | | Data loss | 17.4K |
+| Utility | Shelve | 0.23K | Python | 2.7.11 | 25442 (bug tracker) | | Corruption | 907 |
+| Productivity | Gimp | 522K | C | 2.8.14 | 763124 (bugzilla) | ✓ | Data loss | 188K |
+| Productivity | CuteMarkEd | 21.8K | C++ | 0.11.2 | 285 (github) | ✓ | Data loss | 5.61K |
+| Productivity | TeXmaker | 46.7K | C++ | 4.5 | 1553361 (launchpad) | ✓ | Data loss | 1.61K |
+| Productivity | TeXstudio | 139.6K | C++ | 2.10.8 | 1693 (sourceforge) | ✓ | Data loss | 1.61K |
+| Productivity | Ted | 3.7K | Java | 1.0 | 45 (github) | | Data loss | 4.10K |
+| Productivity | JEdit | 188K | Java | 5.1.0 | 33959 (sourceforge) | | Data loss | 1.61K |
+| Productivity | GitHub Atom | 55.8K | Node.js | 1.5.3 | 10609 (github) | ✓ | Data loss | 1.61K |
+| Productivity | Adobe Brackets | 117K | Node.js | 1.5.0 | 12103 (github) | ✓ | Data loss | 1.61K |
+
+confirmed 8 as previously unknown bugs and 3 as previously known bugs (e.g., the bug is fixed in the current development branch but our validation is based on the latest stable release). The remaining 3 bug reports have not received any responses, but we believe they were also previously unknown based on the search results in the bug/issue tracking system.
+
+All bugs found by C^3 have severe consequences like data loss or corruption, which are analyzed as follows. In 12 out of 14 bugs (gzip, bzip2, sort, perl and all productivity subjects), the user’s file or data can be completely lost after crash. Furthermore, such bugs were triggered in practice. For example, GitHub Atom users manifested the same bug in another adverse condition: when the disk runs out of space at the halfway of file saving. Gzip developers also believe data loss had happened before, however, the bug is not reported maybe due to its irreproducibility.
+
+For the Python standard library Shelve, the bug leads to corrupted database that cannot be analyzed. The library provides three backends for data storage but C^3 found that none of them is crash-safe. One of such backends is GDBM whose crash consistency bug is also discussed in [21]. Some developers believe that a SQLite backend should be provided for data safety.
+
+For GNU make, we validated the use case of incremental build of foo.c. The inconsistent crash site contains a corrupted foo.o whose timestamp is up-to-date. If we proceed with incremental build after system crash, foo.c will be ignored. Such behavior leads to failed (e.g., fail to link a corrupted build target) or erroneous build (e.g., corrupted file packed into the package). Implications of these real-world bugs are further studied in Section 7.
+
+Finally, bugs reported by C^3 also received positive feedbacks from the open-source community. After we reported the bug of gzip in the mailing list, the developers of lzip (a functional equivalent of gzip) confirmed that lzip has the same crash consistency bug.
+
+These results evidently support that C^3 is effective and promising in crash consistency validation.
+
+Test amplification. Column 7 of Table 2 shows that half (7/14) of the bugs cannot be manifested without test amplification using simple test inputs.
+
+An interesting case is TeXstudio, which (1) writes the file contents to a temporary file; (2) opens the original file with O_TRUNC; (3) unlinks the temporary file; and, (4) writes the file contents to the original file. Surprisingly, the file system implementation postpones the effect of unlink and this seemingly-obvious data loss bug cannot be observed in any possible crash site unless the file is huge. With C^3’s test amplification, we can discover the inconsistent crash site that only contains a truncated file.
+
+These results indicate that the test amplification is effective in exempting the need of dedicated workloads.
+
+False positives. We did not observe any false positive in the evaluated subjects. However, C^3 may report false positives if the crash recovery requires non-trivial efforts, e.g., in validating databases [31].
+
+Nevertheless, false positive may not be a big issue for software developers because C^3 reports inconsistent CS with an explanation (the CS cannot be easily transformed to an ES). By examining the CS and ES, the developer can quickly pinpoint the root cause of false positives and provide additional rules to filter out actually consistent crash sites that is reported by the generic oracle of C^3.
+
+Comparisons with manual checking scripts. We evaluated more subjects studied in Alice [21]. These crash consistency bugs are discovered by manual checking scripts. We ran them with C^3 using simple workloads. For GDBM [3], C^3 correctly reported a corrupted database file. For LevelDB [3] and LMDB [4], C^3 reported false positives--inconsistent snapshots that have a relatively small d ≤ 256. For the reported crash sites, running the default database recovery will obtain a consistent database. For SQLite [6], C^3 considers it as consistent and missed the durability bug because it relates to the database’s semantics. For Git [2] and Mercurial [5], C^3 did not found crash inconsistency. The system call trace study [21] suggests that crash may lead to corrupted data (cannot be opened), but data is not actually lost and may be recovered by an experienced user. These results are expected because C^3 trades, to some degree, the effectiveness of the tool (detecting more bugs by learning the semantics of each application) for the easy-of-use of the tool (automating the crash consistency checking procedure).
+
+5.2.2 Ease of Use
+
+We demonstrate that the efforts of using C^3 are minor and trivial for developers. To validate crash consistency, a devel-
+
+
+Figure 4: Histogram of LOC of test input scripts. Average LOC μ = 18.4.
+
+Figure description: The histogram plots lines of code of test input scripts on the x-axis and number of subjects on the y-axis. Most scripts are short, concentrated between about 6 and 30 lines, with the largest group around 18–24 lines. Only a few subjects require longer scripts above 36 lines, supporting the takeaway that test scripts are generally small and easy to write.
+
+oper only needs to provide C^3 a test script (Section 4.1) that consists of (1) an initial software setup, (2) arguments to run the program, and (3) actions to be performed at runtime (for interactive programs only). All such efforts are contained in the test script. We show the statistics of test script LOC in Figure 4. Even if we are end-users of the evaluated subjects, writing such a short test script (5–43 with the mean of 18.4 lines of code) takes only a few minutes of work, which usually consumes less time than setting up the software from scratch. The longest test scripts are GNU make (simulating an incremental build) and GNU patch (generating patch files from two sets of synthesized files), which are 43 and 36 lines of code, respectively. Developers can also reuse their existing test cases by executing them in the test script.
+
+## 5.2.3 Performance
+
+We show the performance evaluation results in Table 3, which is conducted on a machine with limited computational power. For all evaluated subjects, C^3 finishes the entire process in minutes, which is certainly affordable in a testing environment.
+
+There are two major factors that impact the performance of C^3: (1) taking file system snapshots to obtain an ES and (2) generation and validation of CSs. The CS generation and validation consumes the most of time but we still consider such cost is affordable because applications often interact with file system via limited patterns and a few test cases are sufficient to reveal potential crash consistency bugs. Due to the limitation of ptrace, C^3 cannot precisely decide which file system call is related to the virtual disk so ES are collected on all possible system calls. The results show that profiling slightly slows the program but this is only a minor issue because the slowdown is transparent to the program (as if the system call takes longer time to return). Profiling runs of GUI subjects take longer time than command-line subjects because we insert one-second delay between all consecutive GUI operations to ensure their completion.
+
+## 6. LESSONS LEARNED
+
+**Handling file data demands caution.** File system implementations usually do not provide a strong atomicity and persistence guarantee. Therefore, when user’s contents are being erased (even if backup had been performed), the developer should be careful. Even experienced developers of mature software made mistakes (e.g., sort and gzip) and many “correct” solutions in our subjects (e.g., Vim and sed) are counter-intuitive or overkill.
+
+Table 3: Performance evaluation results. Values in a row indicate #ES collected, #CS validated, profiling run time (denoted as P.), CS validation time (denoted as V.) and total time (including initial setup, three runs and CS validation), respectively. The last row displays averaged number of all 25 evaluated subjects.
+
+| Application | ES | CS | P. | V. | Tot. |
+|---|---:|---:|---:|---:|---:|
+| GNU make | 710 | 277 | 0.09 | 0.89 | 1.19 |
+| GNU zip | 726 | 647 | 0.01 | 1.85 | 1.89 |
+| bzip2 | 724 | 846 | 0.01 | 2.68 | 2.71 |
+| GNU coreutils sort | 716 | 578 | 0.03 | 1.86 | 1.96 |
+| Perl | 718 | 929 | 0.01 | 3.10 | 3.13 |
+| Shelve | 754 | 211 | 0.01 | 0.65 | 0.67 |
+| Gimp | 3,648 | 3,168 | 0.33 | 9.76 | 10.74 |
+| CuteMarkEd | 2,216 | 483 | 0.31 | 1.46 | 2.41 |
+| TEXmaker | 1,384 | 423 | 0.33 | 1.30 | 2.30 |
+| TEXstudio | 2,258 | 937 | 0.33 | 2.86 | 3.84 |
+| Ted | 804 | 859 | 0.02 | 2.63 | 2.71 |
+| JEdit | 1,486 | 1,038 | 0.16 | 3.57 | 4.05 |
+| GitHub Atom | 14,627 | 1,201 | 0.59 | 3.87 | 5.65 |
+| Adobe Brackets | 1,197 | 1,704 | 0.59 | 5.53 | 7.28 |
+| Average (all subjects) | 2,176 | 1,166 | 0.22 | 3.70 | 4.21 |
+
+Even worse, protecting data safety is much trickier than it appears, because such data erasure may implicitly happen in the underlying libraries of which the developer may not be aware. For example, Python Pillow provides image.save() for writing an image, which opens the file with O_TRUNC. Using this function to change an image in-place is a crash consistency bug,[9] and such a pattern is quite likely to occur in an image editing software.[10] Furthermore, developers tend to trust the crash consistency of a mature standard library, which also may not be valid. An example is Python standard library Shelve that uses GDBM as its backend by default, which does not provide any crash guarantee.
+
+Therefore, the rule of thumb is to handle file data with care (e.g., adding extra flush and fsync to ensure the persistence if performance is a secondary concern) or crash consistency should be validated with tools like C^3.
+
+**Library support matters.** Relying on developers to handle all corner cases is impractical. It also seems impractical for libraries and file systems to provide strong consistency guarantee: file operations still are the bottleneck of many applications. Rather, libraries should provide means to protect data safety or explicitly document their behaviors or guarantee. Only well-designed libraries can relieve the developers’ burden of considering file system crash behaviors.
+
+Through the communications with the open-source community, we learned that many frameworks provide good solutions to safely manipulate files. For example, Qt provides QSaveFile and GTK provides g_file_replace to handle file operations “in the safest way possible”. We also validated these two libraries by C^3 and we could not find an incon-
+
+9 We did not report this as a bug because Pillow offers no crash safety guarantee.
+
+10 The most famous open-source image editing software Gimp has a similar crash consistency bug in all versions before 2.9.
+
+
+sistent crash site. Therefore, we strongly recommend developers to use libraries that explicitly document their safety (and such safety can be easily validated by C^3) in handling file data.
+
+On the more emerging platforms, however, there lack crash-safe library support. In addition to the two aforementioned Python examples, Node.js as a server-side language only provides a simple library for file system operations. This design is valid because server programs usually persist data in a database. However, when the application domain of Node.js expands, such library becomes a weak link in crash consistency. GitHub Atom developers found the crash consistency bug difficult to fix because Node.js lacks a portable library for safely saving a document.
+
+Therefore, we recommend library developers to validate crash consistency of API use cases with tools like C^3 and explicitly document whether a library function provides crash consistency guarantee.
+
+**Crash consistency deserves more attention.** A developer does not get rid of the crash consistency issue even if the software has nothing to do in the file system. Recall the GNU make example (Section 5.2.1) in which crash may lead to a corrupted objective file that has a up-to-date timestamp. It is not GNU make developer’s responsibility to fix the problem; rather, it is GCC that does not meet crash-safety requirement of GNU make (timestamp should not be updated until output file is persisted). Yet, GCC as a compiler is not required to provide such guarantee. The cascading effect of a minor crash inconsistency finally leads to potentially severe consequences.
+
+Even if GCC was crash-safe, GNU make allows arbitrary scripts to be executed in objective file generation and nobody can guarantee crash consistency for all of them. Therefore, the only solution is to alert users of such issues and start a build from scratch (e.g., by executing make clean) after a system crash.
+
+Finally, this example suggests that developers should receive more education on crash consistency. We believe that the results and analyses presented in this paper will be a wake-up call for general software developers to pay more attention to crash consistency.
+
+## 7. RELATED WORK
+
+Software reliability in various adverse conditions have been extensively studied. Examples are external system events that access conflicting resources [8], combination of multiple exceptional conditions [30], and reordered shared memory accesses in a relaxed memory model system [13].
+
+This paper focuses on crash consistency, the particular adverse condition of system crash. As CPU and memory state vanish after crash, crash consistency bugs are scoped in the storage stack. The storage stack consists of layers of abstractions (hardware interface, device driver, file system, library, and database) and is finally used by the software.
+
+At hardware level, the robustness of physical drives is studied [26,32]. At file system level, data consistency and crash recovery are extensively studied [10,14,18,25]. A file system implementation can be validated by testing [24] or model-checking [29].
+
+However, even if the file system survives the crash, it does not guarantee atomicity and persistence of each individual file system call, leading to crash consistency bugs. Our previous work devised special workloads to exposure such bugs in databases [31]. Seminal work Alice [21] and eXplode [28] introduced general frameworks to validate crash consistency for both system software and applications, which largely inspired our work. Alice focuses on modeling crash behaviors across file system implementations and eXplode focuses on systematic exploration of execution paths that contain exceptional control-flow. However, such techniques are not sufficient to efficiently validate crash consistency of a wide varieties of applications. The generic oracle and test amplification in C^3 facilitate fully automated checking of crash consistency and they are orthogonal to the technical contributions of Alice and eXplode. One can integrate both the generic oracle and the test amplification of C^3 into Alice and/or eXplode. Furthermore, Alice depends on the abstract file system behavior model extracted from a profiling tool that may not be sound (leading to false positives), while any crash site reported by C^3 guarantees to be valid and can be manifested in practice. Recent work [9] studied crash consistency models, which resembles memory consistency models, to characterize and validate crash behavior of file systems. Checking an application’s crash consistency against abstract file system models is a promising future direction.
+
+An alternative approach to crash consistency is providing transaction among system calls, which can be achieved either by operating system support [16,23,27] or by hardware assistance [17,19]. Finally, the ultimate solution to crash consistency is a file system implementation that has provable strong consistency guarantee (atomicity and persistence) for each individual file system call. Such possibility has recently been explored [11]. However, such work is still in its early stage to be realized in performance-critical production environments.
+
+## 8. CONCLUSION
+
+In this paper, we present C^3, a novel approach for validating the crash consistency of application software. The generic oracle and test amplification facilitate the automated validation of crash consistency for application software. Evaluation on real-world applications demonstrates the effectiveness and efficiency of C^3 in detecting crash consistency bugs.
+
+We not only made C^3 public and open-source but also presented valuable lessons learned from the bugs discovered by C^3 and the communications with the open-source community. We hope the results in this paper will be a cornerstone for further enhancement of software reliability in terms of system crash.
+
+## 9. ACKNOWLEDGMENTS
+
+We thank the anonymous reviewers for helpful comments and suggestions. This work was supported in part by National Basic Research 973 Program (Grant #2015CB352202), National Natural Science Foundation (Grant #61472177, #91318301, #61321491) of China, NSF grants #CCF-0953759 (CAREER Award), #CCF-1319705, the CAS/SAFEA international Partnership Program for Creative Research Teams, China Scholarship Council (#201506190103), the program for Outstanding PhD candidate of Nanjing University, and the Collaborative Innovation Center of Novel Software Technology and Industrialization, Jiangsu, China.
+
+
+## 10. REFERENCES
+
+[1] GDBM. http://www.gnu.org/software/gdbm/gdbm.html.
+
+[2] Git. http://git-scm.com
+
+[3] LevelDB. https://code.google.com/p/leveldb
+
+[4] LMDB. http://symas.com/mdb/
+
+[5] Mercurial. http://mercurial-scm.org
+
+[6] SQLite. http://www.sqlite.org/
+
+[7] Linux kernel block driver docs, 2005.
+
+[8] C. Q. Adams, G. Mezzetti, and A. Møller. Systematic execution of android test suites in adverse conditions. In Proceedings of the International Symposium on Software Testing and Analysis, ISSTA, pages 83–93, 2015.
+
+[9] J. Bornholt, A. Kaufmann, J. Li, A. Krishnamurthy, E. Torlak, and X. Wang. Specifying and checking file system crash-consistency models. In Proceedings of the International Conference on Architectural Support for Programming Languages and Operating Systems, ASPLOS, pages 83–98, 2016.
+
+[10] J. Carrera, R. Rodrigues, G. Candea, and R. Majumdar. Scalable testing of file system checkers. In Proceedings of the ACM European Conference on Computer Systems, EuroSys, pages 239–252, 2012.
+
+[11] H. Chen, D. Ziegler, T. Chajed, A. Chlipala, M. F. Kaashoek, and N. Zeldovich. Using crash hoare logic for certifying the FSCQ file system. In Proceedings of the Symposium on Operating Systems Principles, SOSP, pages 18–37, 2015.
+
+[12] E. C. R. Council. The economic impacts of the August 2003 blackout. 2004.
+
+[13] C. Flanagan and S. N. Freund. Adversarial memory for detecting destructive races. In Proceedings of the SIGPLAN Conference on Programming Language Design and Implementation, PLDI, pages 244–254, 2010.
+
+[14] C. Frost, M. Mammarella, E. Kohler, A. de los Reyes, S. Hovsepian, A. Matsuoka, and L. Zhang. Generalized file system dependencies. In Proceedings of the Symposium on Operating Systems Principles, SOSP, pages 307–320, 2007.
+
+[15] L. Gomez, I. Neamtiu, T. Azim, and T. Millstein. RERAN: Timing- and touch-sensitive record and replay for Android. In Proceedings of the International Conference on Software Engineering, ICSE, pages 72–81, 2013.
+
+[16] S. Kim, M. Z. Lee, A. M. Dunn, O. S. Hofmann, X. Wang, E. Witchel, and D. E. Porter. Improving server applications with system transactions. In Proceedings of the ACM European Conference on Computer Systems, EuroSys, pages 15–28, 2012.
+
+[17] Y. Lu, J. Shu, J. Guo, S. Li, and C. Mutlu. High-performance and lightweight transaction support in flash-based ssds. IEEE Transactions on Computers, 64(10):2819–2832, 2015.
+
+[18] A. Ma, C. Dragga, A. C. Arpaci-Dusseau, and R. H. Arpaci-Dusseau. Ffsck: The fast file-system checker. In Proceedings of the USENIX Conference on File and Storage Technologies, FAST, pages 1–16, 2013.
+
+[19] C. Min, W.-H. Kang, T. Kim, S.-W. Lee, and Y. I. Eom. Lightweight application-level crash consistency on transactional flash storage. In Proceedings of the USENIX Annual Technical Conference, USENIX ATC, pages 221–234, 2015.
+
+[20] G. Navarro. A guided tour to approximate string matching. ACM Computing Surveys, 33(1):31–88, 2001.
+
+[21] T. S. Pillai, V. Chidambaram, R. Alagappan, S. Al-Kiswany, A. C. Arpaci-Dusseau, and R. H. Arpaci-Dusseau. All file systems are not created equal: On the complexity of crafting crash-consistent applications. In Proceedings of the Symposium on Operating Systems Design and Implementation, OSDI, pages 433–448, 2014.
+
+[22] T. S. Pillai, V. Chidambaram, R. Alagappan, S. Al-Kiswany, A. C. Arpaci-Dusseau, and R. H. Arpaci-Dusseau. Crash consistency. Communications of the ACM, 58(10):46–51, 2015.
+
+[23] D. E. Porter, O. S. Hofmann, C. J. Rossbach, A. Benn, and E. Witchel. Operating system transactions. In Proceedings of the Symposium on Operating Systems Principles, SOSP, pages 161–176, 2009.
+
+[24] T. Ridge, D. Sheets, T. Tuerk, A. Giugliano, A. Madhavapeddy, and P. Sewell. Sibylfs: Formal specification and oracle-based testing for POSIX and real-world file systems. In Proceedings of the Symposium on Operating Systems Principles, SOSP, pages 38–53, 2015.
+
+[25] M. Rosenblum and J. K. Ousterhout. The design and implementation of a log-structured file system. ACM Transactions on Computer Systems, 10(1):26–52, 1992.
+
+[26] B. Schroeder and G. A. Gibson. Disk failures in the real world: What does an MTTF of 1,000,000 hours mean to you? In Proceedings of the USENIX Conference on File and Storage Technologies, volume 7 of FAST, pages 1–16, 2007.
+
+[27] R. P. Spillane, S. Gaikwad, M. Chinni, E. Zadok, and C. P. Wright. Enabling transactional file access via lightweight kernel extensions. In Proceedings of the USENIX Conference on File and Storage Technologies, volume 9 of FAST, pages 29–42, 2009.
+
+[28] J. Yang, C. Sar, and D. Engler. eXplode: A lightweight, general system for finding serious storage system errors. In Proceedings of the Symposium on Operating Systems Design and Implementation, OSDI, pages 131–146, 2006.
+
+[29] J. Yang, P. Twohey, D. Engler, and M. Musuvathi. Using model checking to find serious file system errors. ACM Transactions on Computer Systems, 24(4):393–423, 2006.
+
+[30] P. Zhang and S. Elbaum. Amplifying tests to validate exception handling code. In Proceedings of the International Conference on Software Engineering, ICSE, pages 595–605, 2012.
+
+[31] M. Zheng, J. Tucek, D. Huang, F. Qin, M. Lillibridge, E. S. Yang, B. W. Zhao, and S. Singh. Torturing databases for fun and profit. In Proceedings of the Symposium on Operating Systems Design and Implementation, OSDI, pages 449–464, 2014.
+
+[32] M. Zheng, J. Tucek, F. Qin, and M. Lillibridge. Understanding the robustness of SSDs under power fault. In Proceedings of the USENIX Conference on File and Storage Technologies, FAST, pages 271–284, 2013.
+
+

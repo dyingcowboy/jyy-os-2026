@@ -1,0 +1,432 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>~*~ ShOpPeR OnLiNe MaLl ~*~ Your #1 Shopping Destination!!! ~*~</title>
+</head>
+<body bgcolor="#000080" text="#FFFFFF" link="#FFFF00" vlink="#00FF00" alink="#FF0000">
+
+<!-- FLOATING BANNER -->
+<div id="floatBanner" style="position:absolute; top:10px; right:10px; z-index:9999;">
+<table bgcolor="#FF0000" border="3" cellpadding="5" cellspacing="0" bordercolor="#FFFF00">
+<tr><td align="center">
+<font face="Comic Sans MS, Arial" size="3" color="#FFFFFF">
+<b>!! HOT DEAL !!<br>
+<font color="#FFFF00">50% OFF</font><br>
+EVERYTHING!!!<br>
+<font size="1">Click Here Now!</font></b>
+</font>
+</td></tr>
+</table>
+</div>
+
+<script language="JavaScript">
+<!--
+var bannerY = 10;
+var direction = 1;
+var speed = 2;
+
+function floatBanner() {
+    bannerY += direction * speed;
+    if (bannerY > 300) direction = -1;
+    if (bannerY < 10) direction = 1;
+
+    var bannerX = 10;
+    var bobX = 0;
+    bobX = bannerX + Math.round(15 * Math.sin(bannerY * 0.05));
+
+    var el = document.getElementById('floatBanner');
+    if (el) {
+        el.style.top = bannerY + 'px';
+        el.style.left = bobX + 'px';
+    }
+}
+
+setInterval('floatBanner()', 30);
+
+// STATUS BAR SCROLLER
+var scrollText = "   *** Welcome to ShOpPeR OnLiNe MaLl!!! *** Great Deals Every Day!!! *** FREE Shipping on orders over $5.00!!! *** ";
+var scrollPos = 0;
+function scrollStatus() {
+    window.status = scrollText.substring(scrollPos) + scrollText.substring(0, scrollPos);
+    scrollPos++;
+    if (scrollPos >= scrollText.length) scrollPos = 0;
+}
+setInterval('scrollStatus()', 100);
+//-->
+</script>
+
+<center>
+<!-- TOP BANNER -->
+<table width="760" border="0" cellpadding="0" cellspacing="0">
+<tr>
+<td bgcolor="#000080" align="center">
+<br>
+<font face="Comic Sans MS, Impact, Arial" size="7" color="#FF0000"><b>
+<blink>S</blink></font><font face="Comic Sans MS, Impact, Arial" size="7" color="#FFFF00"><b>
+<blink>h</blink></font><font face="Comic Sans MS, Impact, Arial" size="7" color="#00FF00"><b>
+<blink>o</blink></font><font face="Comic Sans MS, Impact, Arial" size="7" color="#FF00FF"><b>
+<blink>p</blink></font><font face="Comic Sans MS, Impact, Arial" size="7" color="#00FFFF"><b>
+<blink>p</blink></font><font face="Comic Sans MS, Impact, Arial" size="7" color="#FF6600"><b>
+<blink>e</blink></font><font face="Comic Sans MS, Impact, Arial" size="7" color="#FFFFFF"><b>
+<blink>r</blink></font>
+<br>
+<font face="Arial" size="2" color="#C0C0C0">~~ Your #1 Online Shopping Destination Since 1997 ~~</font>
+<br><br>
+</td>
+</tr>
+</table>
+
+<!-- NAV BAR -->
+<table width="760" border="2" cellpadding="4" cellspacing="0" bgcolor="#800080" bordercolor="#FF00FF">
+<tr align="center">
+<td><font face="Arial" size="2"><a href="#"><font color="#FFFF00"><b>HOME</b></font></a></font></td>
+<td><font face="Arial" size="2"><a href="#"><font color="#FFFF00"><b>ELECTRONICS</b></font></a></font></td>
+<td><font face="Arial" size="2"><a href="#"><font color="#FFFF00"><b>BOOKS</b></font></a></font></td>
+<td><font face="Arial" size="2"><a href="#"><font color="#FFFF00"><b>SOFTWARE</b></font></a></font></td>
+<td><font face="Arial" size="2"><a href="#"><font color="#FFFF00"><b>FREE STUFF</b></font></a></font></td>
+<td><font face="Arial" size="2"><a href="#"><font color="#FFFF00"><b>GUESTBOOK</b></font></a></font></td>
+</tr>
+</table>
+
+<br>
+
+<!-- MARQUEE -->
+<table width="760" border="0" cellpadding="2" cellspacing="0" bgcolor="#FF0000">
+<tr><td align="center">
+<font face="Arial" size="3" color="#FFFFFF"><b>
+<script language="JavaScript">
+<!--
+var marqueeText = ">>> HOT DEALS! <<<  Welcome to ShOpPeR!  >>> Get a FREE mousepad with every order!!! <<<  NOW ACCEPTING PERSONAL CHECKS!!! >>>  Sign our Guestbook and win a FREE T-SHIRT!!! <<<  ";
+var mPos = 0;
+function writeMarquee() {
+    var spaces = "                                                                                ";
+    var display = marqueeText.substring(mPos) + spaces + marqueeText.substring(0, mPos);
+    if (document.getElementById('marqueeLine')) {
+        document.getElementById('marqueeLine').innerHTML = display.substring(0, 80);
+    }
+    mPos++;
+    if (mPos >= marqueeText.length) mPos = 0;
+}
+setInterval('writeMarquee()', 120);
+//-->
+</script>
+<span id="marqueeLine"><font face="Courier New" size="3" color="#FFFF00">>>> HOT DEALS! <<<  Welcome to ShOpPeR!</font></span>
+</b></font>
+</td></tr>
+</table>
+
+<br>
+
+<!-- MAIN CONTENT -->
+<table width="760" border="0" cellpadding="0" cellspacing="0">
+<tr>
+<!-- LEFT SIDEBAR -->
+<td width="150" valign="top" bgcolor="#000066">
+<br>
+<table width="140" border="1" cellpadding="5" cellspacing="0" bordercolor="#00FFFF" bgcolor="#000033">
+<tr><td align="center" bgcolor="#000080">
+<font face="Arial" size="2" color="#00FFFF"><b>:: CATALOG ::</b></font>
+</td></tr>
+<tr><td>
+<font face="Verdana" size="1">
+<img src="data:image/gif;base64,R0lGODlhCAAIAIAAAP//AAAAAAACH5BAEAAAAALAAAAAAIAAgAAAIKhI+py+0PYzBSAQA7" width="8" height="8"><a href="#"><font color="#FFFF00">Computers</font></a><br>
+<img src="data:image/gif;base64,R0lGODlhCAAIAIAAAP//AAAAAAACH5BAEAAAAALAAAAAAIAAgAAAIKhI+py+0PYzBSAQA7" width="8" height="8"><a href="#"><font color="#FFFF00">Software</font></a><br>
+<img src="data:image/gif;base64,R0lGODlhCAAIAIAAAP//AAAAAAACH5BAEAAAAALAAAAAAIAAgAAAIKhI+py+0PYzBSAQA7" width="8" height="8"><a href="#"><font color="#FFFF00">Books</font></a><br>
+<img src="data:image/gif;base64,R0lGODlhCAAIAIAAAP//AAAAAAACH5BAEAAAAALAAAAAAIAAgAAAIKhI+py+0PYzBSAQA7" width="8" height="8"><a href="#"><font color="#FFFF00">Music CDs</font></a><br>
+<img src="data:image/gif;base64,R0lGODlhCAAIAIAAAP//AAAAAAACH5BAEAAAAALAAAAAAIAAgAAAIKhI+py+0PYzBSAQA7" width="8" height="8"><a href="#"><font color="#FFFF00">Video Games</font></a><br>
+<img src="data:image/gif;base64,R0lGODlhCAAIAIAAAP//AAAAAAACH5BAEAAAAALAAAAAAIAAgAAAIKhI+py+0PYzBSAQA7" width="8" height="8"><a href="#"><font color="#FFFF00">Electronics</font></a><br>
+<img src="data:image/gif;base64,R0lGODlhCAAIAIAAAP//AAAAAAACH5BAEAAAAALAAAAAAIAAgAAAIKhI+py+0PYzBSAQA7" width="8" height="8"><a href="#"><font color="#FFFF00">Clothing</font></a><br>
+<img src="data:image/gif;base64,R0lGODlhCAAIAIAAAP//AAAAAAACH5BAEAAAAALAAAAAAIAAgAAAIKhI+py+0PYzBSAQA7" width="8" height="8"><a href="#"><font color="#FFFF00">Toys</font></a><br>
+</font>
+</td></tr>
+</table>
+
+<br>
+
+<table width="140" border="1" cellpadding="5" cellspacing="0" bordercolor="#00FF00" bgcolor="#000033">
+<tr><td align="center" bgcolor="#003300">
+<font face="Arial" size="2" color="#00FF00"><b>:: SHOPPING CART ::</b></font>
+</td></tr>
+<tr><td align="center">
+<font face="Verdana" size="1" color="#FFFFFF">
+Items: <font color="#FFFF00"><b>0</b></font><br>
+Total: <font color="#00FF00"><b>$0.00</b></font><br><br>
+<a href="#"><font color="#FF0000"><b>[CHECKOUT]</b></font></a>
+</font>
+</td></tr>
+</table>
+
+<br>
+
+<table width="140" border="1" cellpadding="5" cellspacing="0" bordercolor="#FF6600" bgcolor="#330000">
+<tr><td align="center" bgcolor="#660000">
+<font face="Arial" size="2" color="#FF6600"><b>:: WEATHER ::</b></font>
+</td></tr>
+<tr><td align="center">
+<font face="Verdana" size="1" color="#FFFFFF">
+Your City:<br>
+<input type="text" size="10"><br>
+<input type="button" value="GO!" style="font-size:10px">
+</font>
+</td></tr>
+</table>
+
+<br>
+
+<!-- COUNTER -->
+<table width="140" border="1" cellpadding="5" cellspacing="0" bordercolor="#C0C0C0">
+<tr><td align="center">
+<font face="Verdana" size="1" color="#C0C0C0">Visitors:</font><br>
+<font face="Courier New" size="2" color="#00FF00"><b>004,823</b></font>
+</td></tr>
+</table>
+
+<br>
+</td>
+
+<!-- MAIN CONTENT AREA -->
+<td width="460" valign="top" bgcolor="#000080">
+<br>
+
+<!-- WELCOME -->
+<table width="440" border="2" cellpadding="10" cellspacing="0" bordercolor="#0000FF" bgcolor="#000066" align="center">
+<tr><td>
+<font face="Times New Roman" size="4" color="#FFFF00"><b>Welcome to ShOpPeR Online Mall!</b></font>
+<hr size="1" color="#0000FF">
+<font face="Arial" size="2" color="#FFFFFF">
+Welcome valued customer! We have the <font color="#FF0000"><b>BEST</b></font> deals on the World Wide Web!
+Browse our extensive catalog of products at <font color="#00FF00"><b>UNBEATABLE</b></font> prices!<br><br>
+<font size="1" color="#C0C0C0">Best viewed with Netscape Navigator 4.0 at 800x600</font>
+</font>
+</td></tr>
+</table>
+
+<br>
+
+<!-- FEATURED PRODUCTS -->
+<table width="440" border="2" cellpadding="0" cellspacing="0" bordercolor="#FF00FF" bgcolor="#000066" align="center">
+<tr><td align="center" bgcolor="#330033">
+<font face="Arial" size="3" color="#FF00FF"><b>:::: FEATURED PRODUCTS ::::</b></font>
+</td></tr>
+</table>
+
+<table width="440" border="2" cellpadding="8" cellspacing="0" bordercolor="#800080" bgcolor="#000066" align="center">
+<tr>
+<td width="33%" align="center" valign="top" bgcolor="#000066">
+<font face="Arial" size="1" color="#C0C0C0">
+<table bgcolor="#333333" border="1" width="90" height="70" bordercolor="#666666"><tr><td align="center">
+<font size="4" color="#00FFFF">&#9776;</font>
+</td></tr></table>
+<font color="#FFFF00"><b>Super PC 300MHz</b></font><br>
+<font color="#FF0000"><b><s>$2,499.99</s></font><br>
+<font color="#00FF00" size="3">$1,999.99</font></b><br>
+<input type="button" value="BUY NOW!" style="font-size:9px;background:#FF0000;color:#FFFFFF;font-weight:bold">
+</font>
+</td>
+<td width="33%" align="center" valign="top" bgcolor="#000066">
+<font face="Arial" size="1" color="#C0C0C0">
+<table bgcolor="#333333" border="1" width="90" height="70" bordercolor="#666666"><tr><td align="center">
+<font size="4" color="#00FF00">&#9733;</font>
+</td></tr></table>
+<font color="#FFFF00"><b>Windows 98 SE</b></font><br>
+<font color="#FF0000"><b><s>$199.99</s></font><br>
+<font color="#00FF00" size="3">$149.99</font></b><br>
+<input type="button" value="BUY NOW!" style="font-size:9px;background:#FF0000;color:#FFFFFF;font-weight:bold">
+</font>
+</td>
+<td width="33%" align="center" valign="top" bgcolor="#000066">
+<font face="Arial" size="1" color="#C0C0C0">
+<table bgcolor="#333333" border="1" width="90" height="70" bordercolor="#666666"><tr><td align="center">
+<font size="4" color="#FF00FF">&#9835;</font>
+</td></tr></table>
+<font color="#FFFF00"><b>56K Modem</b></font><br>
+<font color="#FF0000"><b><s>$89.99</s></font><br>
+<font color="#00FF00" size="3">$59.99</font></b><br>
+<input type="button" value="BUY NOW!" style="font-size:9px;background:#FF0000;color:#FFFFFF;font-weight:bold">
+</font>
+</td>
+</tr>
+</table>
+
+<br>
+
+<!-- HOT DEALS TABLE -->
+<table width="440" border="2" cellpadding="0" cellspacing="0" bordercolor="#FF0000" bgcolor="#330000" align="center">
+<tr><td align="center">
+<font face="Arial" size="3" color="#FF0000"><b>:::: HOT DEALS! ::::</b></font>
+</td></tr>
+</table>
+
+<table width="440" border="2" cellpadding="5" cellspacing="0" bordercolor="#CC0000" bgcolor="#000033" align="center">
+<tr bgcolor="#660000">
+<td><font face="Arial" size="2" color="#FFFFFF"><b>Product</b></font></td>
+<td><font face="Arial" size="2" color="#FFFFFF"><b>Reg. Price</b></font></td>
+<td><font face="Arial" size="2" color="#FFFFFF"><b>Our Price</b></font></td>
+<td><font face="Arial" size="2" color="#FFFFFF"><b>Save</b></font></td>
+</tr>
+<tr>
+<td><font face="Verdana" size="1" color="#FFFFFF">Pentium II 400MHz</font></td>
+<td><font face="Verdana" size="1" color="#FF0000"><s>$3,299.00</s></font></td>
+<td><font face="Verdana" size="1" color="#00FF00"><b>$2,799.00</b></font></td>
+<td><font face="Verdana" size="1" color="#FFFF00">15%</font></td>
+</tr>
+<tr bgcolor="#000044">
+<td><font face="Verdana" size="1" color="#FFFFFF">32MB RAM Upgrade</font></td>
+<td><font face="Verdana" size="1" color="#FF0000"><s>$129.99</s></font></td>
+<td><font face="Verdana" size="1" color="#00FF00"><b>$89.99</b></font></td>
+<td><font face="Verdana" size="1" color="#FFFF00">31%</font></td>
+</tr>
+<tr>
+<td><font face="Verdana" size="1" color="#FFFFFF">4GB Hard Drive</font></td>
+<td><font face="Verdana" size="1" color="#FF0000"><s>$299.99</s></font></td>
+<td><font face="Verdana" size="1" color="#00FF00"><b>$199.99</b></font></td>
+<td><font face="Verdana" size="1" color="#FFFF00">33%</font></td>
+</tr>
+<tr bgcolor="#000044">
+<td><font face="Verdana" size="1" color="#FFFFFF">15" Monitor</font></td>
+<td><font face="Verdana" size="1" color="#FF0000"><s>$599.99</s></font></td>
+<td><font face="Verdana" size="1" color="#00FF00"><b>$449.99</b></font></td>
+<td><font face="Verdana" size="1" color="#FFFF00">25%</font></td>
+</tr>
+<tr>
+<td><font face="Verdana" size="1" color="#FFFFFF">HP Inkjet Printer</font></td>
+<td><font face="Verdana" size="1" color="#FF0000"><s>$249.99</s></font></td>
+<td><font face="Verdana" size="1" color="#00FF00"><b>$179.99</b></font></td>
+<td><font face="Verdana" size="1" color="#FFFF00">28%</font></td>
+</tr>
+</table>
+
+<br>
+
+<!-- MAILING LIST -->
+<table width="440" border="2" cellpadding="8" cellspacing="0" bordercolor="#00FF00" bgcolor="#003300" align="center">
+<tr><td align="center">
+<font face="Arial" size="2" color="#00FF00"><b>Join Our Mailing List!</b></font><br>
+<font face="Verdana" size="1" color="#FFFFFF">Get exclusive deals delivered to your inbox!</font><br><br>
+<input type="text" size="20" value="your@email.com">
+<input type="button" value="JOIN!" style="font-size:10px;background:#00FF00;color:#000000;font-weight:bold">
+</td></tr>
+</table>
+
+<br>
+
+</td>
+
+<!-- RIGHT SIDEBAR -->
+<td width="150" valign="top" bgcolor="#000066">
+<br>
+
+<!-- WEB RING -->
+<table width="140" border="1" cellpadding="5" cellspacing="0" bordercolor="#C0C0C0" bgcolor="#333333">
+<tr><td align="center" bgcolor="#666666">
+<font face="Arial" size="2" color="#FFFFFF"><b>WEB RING</b></font>
+</td></tr>
+<tr><td align="center">
+<font face="Verdana" size="1">
+<a href="#"><font color="#FFFF00">[&lt;&lt; Prev]</font></a>
+<a href="#"><font color="#FFFF00">[Random]</font></a>
+<a href="#"><font color="#FFFF00">[Next &gt;&gt;]</font></a>
+<br><br>
+<font color="#C0C0C0">Shopping<br>Web Ring</font><br>
+<font color="#00FF00">Site 47 of 156</font>
+</font>
+</td></tr>
+</table>
+
+<br>
+
+<!-- NEWS TICKER -->
+<table width="140" border="1" cellpadding="5" cellspacing="0" bordercolor="#FFFF00" bgcolor="#333300">
+<tr><td align="center" bgcolor="#666600">
+<font face="Arial" size="2" color="#FFFF00"><b>NEWS!</b></font>
+</td></tr>
+<tr><td>
+<font face="Verdana" size="1" color="#FFFFFF">
+<font color="#FF0000"><b>NEW!</b></font> Y2K compliant!<br>
+<font color="#FF0000"><b>HOT!</b></font> Free shipping!<br>
+<font color="#FF0000"><b>WOW!</b></font> New products!<br>
+<font color="#FF0000"><b>COOL!</b></font> Chat room open!<br>
+</font>
+</td></tr>
+</table>
+
+<br>
+
+<!-- AWARDS -->
+<table width="140" border="1" cellpadding="5" cellspacing="0" bordercolor="#FFD700" bgcolor="#333333">
+<tr><td align="center" bgcolor="#666600">
+<font face="Arial" size="2" color="#FFD700"><b>:: AWARDS ::</b></font>
+</td></tr>
+<tr><td align="center">
+<font face="Verdana" size="1" color="#FFD700">
+&#9733; &#9733; &#9733;<br>
+<font color="#C0C0C0">Top 100 Sites<br>of the Web!</font><br><br>
+&#9733; &#9733; &#9733; &#9733; &#9733;<br>
+<font color="#C0C0C0">Cool Site<br>of the Day!</font>
+</font>
+</td></tr>
+</table>
+
+<br>
+
+<!-- LINKS -->
+<table width="140" border="1" cellpadding="5" cellspacing="0" bordercolor="#00FFFF" bgcolor="#000033">
+<tr><td align="center" bgcolor="#000066">
+<font face="Arial" size="2" color="#00FFFF"><b>LINKS</b></font>
+</td></tr>
+<tr><td>
+<font face="Verdana" size="1">
+<a href="#"><font color="#FFFF00">Yahoo!</font></a><br>
+<a href="#"><font color="#FFFF00">AltaVista</font></a><br>
+<a href="#"><font color="#FFFF00">GeoCities</font></a><br>
+<a href="#"><font color="#FFFF00">Lycos</font></a><br>
+<a href="#"><font color="#FFFF00">HotBot</font></a><br>
+</font>
+</td></tr>
+</table>
+
+<br>
+
+<!-- MIDI PLAYER -->
+<table width="140" border="1" cellpadding="5" cellspacing="0" bordercolor="#FF00FF" bgcolor="#330033">
+<tr><td align="center">
+<font face="Verdana" size="1" color="#FF00FF"><b>Now Playing:</b></font><br>
+<font face="Verdana" size="1" color="#FFFFFF">elevator_music.midi</font><br>
+<input type="button" value="STOP" style="font-size:9px">
+</td></tr>
+</table>
+
+<br>
+
+</td>
+</tr>
+</table>
+
+<!-- FOOTER -->
+<table width="760" border="2" cellpadding="10" cellspacing="0" bordercolor="#0000FF" bgcolor="#000033">
+<tr><td align="center">
+<font face="Arial" size="1" color="#C0C0C0">
+<a href="#"><font color="#FFFF00">Home</font></a> |
+<a href="#"><font color="#FFFF00">About Us</font></a> |
+<a href="#"><font color="#FFFF00">Contact</font></a> |
+<a href="#"><font color="#FFFF00">Privacy Policy</font></a> |
+<a href="#"><font color="#FFFF00">Shipping Info</font></a> |
+<a href="#"><font color="#FFFF00">Returns</font></a>
+<br><br>
+<font color="#808080">
+&copy; 1998-1999 ShOpPeR Online Mall. All Rights Reserved.<br>
+Best viewed with <font color="#00FF00">Netscape Navigator 4.0</font> at <font color="#FFFF00">800x600</font> resolution.<br>
+This site is <font color="#FF0000"><b>Y2K COMPLIANT!</b></font><br><br>
+Made with <font color="#FF0000">&hearts;</font> using <font color="#C0C0C0">Notepad</font><br>
+<img src="data:image/gif;base64,R0lGODlhCAAIAIAAAP//AAAAAAACH5BAEAAAAALAAAAAAIAAgAAAIKhI+py+0PYzBSAQA7" width="1" height="1">
+<font color="#00FF00">HTML 4.0 Validated</font>
+</font>
+</font>
+</td></tr>
+</table>
+
+<br>
+</center>
+
+</body>
+</html>
