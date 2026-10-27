@@ -1,0 +1,8 @@
+# 顶层 make 的构建状态记录
+.make-status/
+
+# orchestra demo 生成的音频文件
+demos/concurrency/orchestra/notes/
+
+# macOS 生成的调试符号
+*.dSYM/

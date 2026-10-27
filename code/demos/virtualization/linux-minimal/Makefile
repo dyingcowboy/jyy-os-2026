@@ -1,3 +1,7 @@
+include ../../../mk/demo.mk
+
+# 用最小 init 程序 + 宿主机内核启动 qemu，需要 Linux 的 /boot/vmlinuz 和 qemu。
+ifeq ($(IS_LINUX),1)
 INIT := /init
 UNAME_M := $(shell uname -m)
 ifeq ($(UNAME_M),x86_64)
@@ -5,6 +9,8 @@ CROSS :=
 else
 CROSS := x86_64-linux-gnu-
 endif
+
+all: initramfs
 
 initramfs: minimal
 # Copy kernel and minimal from the host system
@@ -31,9 +37,13 @@ run:
 clean:
 	rm -rf build minimal.s minimal.o minimal
 
-.PHONY: initramfs run clean minimal
+.PHONY: all initramfs run clean minimal
 
 minimal: minimal.S
 	$(CROSS)gcc -g -S minimal.S > minimal.s
 	$(CROSS)as minimal.s -o minimal.o
 	$(CROSS)ld -o minimal minimal.o
+else
+DEMO_SKIP_REASON := 需要 Linux 内核、cpio 与 qemu-system-x86_64
+$(eval $(call skip_demo))
+endif

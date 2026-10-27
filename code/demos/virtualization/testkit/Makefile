@@ -1,3 +1,5 @@
+include ../../../mk/demo.mk
+
 CFLAGS := -Wall -g
 
 SRCS := $(wildcard *.c)
@@ -7,7 +9,7 @@ OBJS := $(SRCS:.c=)
 all: $(OBJS)
 
 %: %.c
-	gcc testkit/testkit.c $(CFLAGS) $< -o $@
+	$(CC) testkit/testkit.c $(CFLAGS) $< -o $@
 
 clean:
 	rm -f $(OBJS) /tmp/my_pipe

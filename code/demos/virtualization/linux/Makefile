@@ -1,3 +1,8 @@
+include ../../../mk/demo.mk
+
+# 用宿主机的内核 + busybox 拼一个最小 initramfs，再用 qemu 启动。
+# 全程依赖 Linux 的 /boot/vmlinuz、busybox-static、cpio、mkfs.ext4 和 qemu。
+ifeq ($(IS_LINUX),1)
 # Requires statically linked busybox in $PATH
 
 INIT := /init
@@ -44,4 +49,8 @@ run:
 clean:
 	rm -rf build fsroot/modules
 
-.PHONY: initramfs run clean fsroot
+.PHONY: all initramfs run clean fsroot
+else
+DEMO_SKIP_REASON := 需要 Linux 内核、busybox-static、cpio/mkfs.ext4 与 qemu
+$(eval $(call skip_demo))
+endif

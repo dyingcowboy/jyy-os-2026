@@ -1,7 +1,13 @@
-CFLAGS := -O2 -I$(TLIB_PATH)
+include ../../../mk/demo.mk
+
+all: pc
+
+CFLAGS := -O2 -I$(TLIB_PATH) $(PTHREAD)
 
 pc: pc.c
-	gcc $(CFLAGS) -o $@ $<
+	$(CC) $(CFLAGS) -o $@ $<
 
 clean:
 	rm -f pc
+
+.PHONY: all clean

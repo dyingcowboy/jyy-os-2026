@@ -1,7 +1,11 @@
+include ../../../mk/demo.mk
+
+all: mini-rv32ima
+
 mini-rv32ima: main.c mini-rv32ima.h
-	gcc -g -o $@ $<
+	$(CC) -g -o $@ $<
 
 clean:
 	rm -f mini-rv32ima
 
-.PHONY: clean
+.PHONY: all clean

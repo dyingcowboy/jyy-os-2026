@@ -1,139 +1,104 @@
+#!/usr/bin/env python3
 # Author: claude-3.7-sonnet
+#
+# 合成 orchestra demo 需要的 84 个音符（C1–B7）。
+#
+# 原版依赖 numpy；为了 `make` 在干净环境里也能跑，这里改成只用标准库
+# （math / wave / struct）。音色算法和原来一致：基频 + 2..5 次谐波，
+# 再乘一个「快速起音 - 衰减到持续 - 淡出」的包络。
 
-import numpy as np
-import wave
-import struct
+import math
 import os
+import struct
+import wave
 
-def generate_piano_note(frequency, duration=1.0, sample_rate=44100, amplitude=0.5):
-    """
-    Generate a piano-like waveform for a given frequency.
-    
-    Args:
-        frequency: The frequency of the note in Hz
-        duration: Length of the note in seconds
-        sample_rate: Number of samples per second
-        amplitude: Volume of the note (0.0 to 1.0)
-    
-    Returns:
-        A numpy array containing the waveform
-    """
-    # Calculate the number of samples
+SAMPLE_RATE = 44100
+DURATION = 1.0
+AMPLITUDE = 0.5
+HARMONICS = 5
+
+
+def generate_piano_note(frequency, duration=DURATION, sample_rate=SAMPLE_RATE,
+                        amplitude=AMPLITUDE):
+    """合成一个类似钢琴的波形，返回 -1..1 之间的浮点列表。"""
     num_samples = int(duration * sample_rate)
-    
-    # Generate time array
-    t = np.linspace(0, duration, num_samples, False)
-    
-    # Generate a piano-like tone with harmonics
-    # The fundamental frequency
-    waveform = np.sin(2 * np.pi * frequency * t)
-    
-    # Add harmonics with decreasing amplitude to simulate piano timbre
-    for i in range(2, 6):
-        waveform += (1.0/i) * np.sin(2 * np.pi * (frequency * i) * t)
-    
-    # Apply a simple envelope to simulate piano attack and decay
-    envelope = np.ones(num_samples)
-    attack_samples = int(0.01 * sample_rate)  # 10ms attack
-    decay_samples = int(0.1 * sample_rate)    # 100ms initial decay
-    release_samples = int(0.3 * sample_rate)  # 300ms release
-    
-    # Attack phase (quick ramp up)
-    envelope[:attack_samples] = np.linspace(0, 1, attack_samples)
-    
-    # Decay phase (quick drop to sustain level)
-    sustain_level = 0.7
-    envelope[attack_samples:attack_samples+decay_samples] = np.linspace(1, sustain_level, decay_samples)
-    
-    # Release phase (gradual fade out)
-    release_start = num_samples - release_samples
-    envelope[release_start:] = np.linspace(envelope[release_start-1], 0, release_samples)
-    
-    # Apply envelope to waveform
-    waveform = waveform * envelope
-    
-    # Normalize and apply amplitude
-    waveform = waveform / np.max(np.abs(waveform)) * amplitude
-    
-    return waveform
+    two_pi = 2.0 * math.pi
 
-def save_wave_file(filename, waveform, sample_rate=44100):
-    """
-    Save a waveform as a WAV file.
-    
-    Args:
-        filename: Output filename
-        waveform: Numpy array containing the waveform
-        sample_rate: Number of samples per second
-    """
-    # Ensure the waveform is between -1 and 1
-    waveform = np.clip(waveform, -1.0, 1.0)
-    
-    # Convert to 16-bit PCM
-    waveform_int = (waveform * 32767).astype(np.int16)
-    
-    # Create WAV file
+    # 基频 + 逐次减弱的高次谐波
+    waveform = [0.0] * num_samples
+    for i in range(num_samples):
+        t = i / sample_rate
+        v = math.sin(two_pi * frequency * t)
+        for h in range(2, HARMONICS + 1):
+            v += (1.0 / h) * math.sin(two_pi * frequency * h * t)
+        waveform[i] = v
+
+    # 包络：10ms 起音，100ms 衰减到 0.7，最后 300ms 淡出
+    attack_samples = int(0.01 * sample_rate)
+    decay_samples = int(0.1 * sample_rate)
+    release_samples = int(0.3 * sample_rate)
+    sustain_level = 0.7
+
+    for i in range(attack_samples):
+        waveform[i] *= i / attack_samples
+
+    for i in range(decay_samples):
+        waveform[attack_samples + i] *= (
+            1.0 + (sustain_level - 1.0) * i / decay_samples
+        )
+
+    release_start = num_samples - release_samples
+    start_level = waveform[release_start - 1] if release_start > 0 else 0.0
+    for i in range(release_samples):
+        waveform[release_start + i] *= start_level * (1.0 - i / release_samples)
+
+    # 归一化到指定响度
+    peak = max(abs(v) for v in waveform) or 1.0
+    return [v / peak * amplitude for v in waveform]
+
+
+def save_wave_file(filename, waveform, sample_rate=SAMPLE_RATE):
+    """把波形写成 16-bit 单声道 WAV。"""
+    frames = bytearray()
+    for v in waveform:
+        sample = int(max(-1.0, min(1.0, v)) * 32767)
+        frames += struct.pack('<h', sample)
+
     with wave.open(filename, 'w') as wav_file:
-        wav_file.setnchannels(1)  # Mono
-        wav_file.setsampwidth(2)  # 16-bit
+        wav_file.setnchannels(1)
+        wav_file.setsampwidth(2)
         wav_file.setframerate(sample_rate)
-        
-        # Write frames
-        for sample in waveform_int:
-            wav_file.writeframes(struct.pack('h', sample))
+        wav_file.writeframes(bytes(frames))
+
 
 def abc_to_frequency(note):
-    """
-    Convert ABC notation to frequency in Hz.
-    
-    Args:
-        note: Note in ABC notation (e.g., "C4", "A#3", "Bb5")
-    
-    Returns:
-        Frequency in Hz
-    """
-    # Define the notes in an octave
+    """把 ABC 记谱的音名（如 C4、A#3、Bb5）换算成频率（Hz）。"""
     notes = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
-    
-    # Parse the note
-    if len(note) >= 2:
-        base_note = note[0].upper()
-        
-        # Handle sharps and flats
-        offset = 0
-        idx = 1
-        if idx < len(note) and (note[idx] == '#' or note[idx] == 'b'):
-            if note[idx] == '#':
-                offset = 1
-            else:  # flat
-                offset = -1
-            idx += 1
-        
-        # Get the octave
-        octave = int(note[idx:])
-        
-        # Calculate the semitone distance from A4 (440 Hz)
-        semitones_from_a4 = (octave - 4) * 12 + notes[base_note] + offset - 9
-        
-        # Calculate the frequency using the formula: f = 440 * 2^(n/12)
-        frequency = 440.0 * (2.0 ** (semitones_from_a4 / 12.0))
-        
-        return frequency
-    
-    raise ValueError(f"Invalid note format: {note}")
+
+    if len(note) < 2:
+        raise ValueError(f"Invalid note format: {note}")
+
+    base_note = note[0].upper()
+    offset = 0
+    idx = 1
+    if idx < len(note) and note[idx] in '#b':
+        offset = 1 if note[idx] == '#' else -1
+        idx += 1
+
+    octave = int(note[idx:])
+    semitones_from_a4 = (octave - 4) * 12 + notes[base_note] + offset - 9
+    return 440.0 * (2.0 ** (semitones_from_a4 / 12.0))
+
 
 def main():
-    # Create output directory if it doesn't exist
-    if not os.path.exists('notes'):
-        os.makedirs('notes')
-    
-    # Generate notes for octaves 1 through 7
+    os.makedirs('notes', exist_ok=True)
+
     notes = []
     for octave in range(1, 8):
-        for note in ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']:
+        for note in ['C', 'C#', 'D', 'D#', 'E', 'F',
+                     'F#', 'G', 'G#', 'A', 'A#', 'B']:
             notes.append(f"{note}{octave}")
-    
-    # Generate and save each note
+
     for note in notes:
         try:
             frequency = abc_to_frequency(note)
@@ -143,6 +108,7 @@ def main():
             print(f"Generated {filename}")
         except Exception as e:
             print(f"Error generating {note}: {e}")
+
 
 if __name__ == "__main__":
     main()

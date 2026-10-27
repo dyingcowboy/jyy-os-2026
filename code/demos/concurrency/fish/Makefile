@@ -1,8 +1,13 @@
-TLIB_PATH ?= ../thread-lib
-CFLAGS := -O2 -I$(TLIB_PATH)
+include ../../../mk/demo.mk
+
+all: fish
+
+CFLAGS := -O2 -I$(TLIB_PATH) $(PTHREAD)
 
 fish: fish.c
-	gcc $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^
 
 clean:
 	rm -f fish
+
+.PHONY: all clean

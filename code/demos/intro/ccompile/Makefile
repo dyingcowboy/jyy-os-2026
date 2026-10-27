@@ -1,14 +1,16 @@
+include ../../../mk/demo.mk
+
 CFLAGS := -Wall
 
 all: examples-O0.s examples-O2.s
 
 %-O0.s: %.c
-	gcc $(CFLAGS) $< -S -o $@
+	$(CC) $(CFLAGS) $< -S -o $@
 
 %-O2.s: %.c
-	gcc $(CFLAGS) $< -O2 -S -o $@
+	$(CC) $(CFLAGS) $< -O2 -S -o $@
 
 clean:
-	rm -f $(OBJS) *.s
+	rm -f *.s
 
 .PHONY: all clean

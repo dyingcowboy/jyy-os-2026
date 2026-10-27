@@ -1,5 +1,11 @@
+include ../../../mk/demo.mk
+
+all: hello
+
 hello: hello.c
-	gcc -I. -o $@ $<
+	$(CC) -I. $(PTHREAD) -o $@ $<
 
 clean:
 	rm -f hello
+
+.PHONY: all clean

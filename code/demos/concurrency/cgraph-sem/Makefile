@@ -1,4 +1,6 @@
-CFLAGS := -Wall -g -O2 -I$(TLIB_PATH)
+include ../../../mk/demo.mk
+
+CFLAGS := -Wall -g -O2 -I$(TLIB_PATH) $(PTHREAD)
 SRCS := $(wildcard *.c)
 OBJS := $(SRCS:.c=)
 
@@ -6,7 +8,7 @@ OBJS := $(SRCS:.c=)
 all: $(OBJS)
 
 %: %.c
-	gcc $(CFLAGS) $< -o $@
+	$(CC) $(CFLAGS) $< -o $@
 
 clean:
 	rm -f $(OBJS)

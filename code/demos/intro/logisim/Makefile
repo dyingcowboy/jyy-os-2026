@@ -1,5 +1,9 @@
+include ../../../mk/demo.mk
+
+all: logisim
+
 logisim: logisim.c
-	gcc -o logisim -I. logisim.c
+	$(CC) -I. -o $@ logisim.c
 
 run: logisim
 	./logisim | python3 seg-display.py  # The UNIX Philosophy
@@ -7,4 +11,4 @@ run: logisim
 clean:
 	rm -f logisim
 
-.PHONY: run clean
+.PHONY: all clean run

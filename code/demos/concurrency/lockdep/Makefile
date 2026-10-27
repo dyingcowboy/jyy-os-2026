@@ -1,8 +1,8 @@
-CC = gcc
-CFLAGS = -Wall -pthread -I$(TLIB_PATH)
+include ../../../mk/demo.mk
 
-UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),Darwin)
+CFLAGS = -Wall $(PTHREAD) -I$(TLIB_PATH)
+
+ifeq ($(IS_MACOS),1)
   # Compile tests with flat namespace so DYLD_INSERT_LIBRARIES overrides symbols
   LDFLAGS = -Wl,-flat_namespace
   PRELOAD = DYLD_INSERT_LIBRARIES=./lockdep.so

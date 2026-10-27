@@ -1,9 +1,13 @@
+include ../../../mk/demo.mk
+
 all: peterson
 
-CFLAGS := -I$(TLIB_PATH) -O2
+CFLAGS := -O2 -I$(TLIB_PATH) $(PTHREAD)
 
 peterson: peterson.c Makefile
-	gcc $(CFLAGS) -o $@ $<
+	$(CC) $(CFLAGS) -o $@ $<
 
 clean:
 	rm -f peterson
+
+.PHONY: all clean

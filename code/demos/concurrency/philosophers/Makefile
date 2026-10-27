@@ -1,9 +1,13 @@
+include ../../../mk/demo.mk
+
 all: philosophers
 
-CFLAGS := -O2 -I$(TLIB_PATH)
+CFLAGS := -O2 -I$(TLIB_PATH) $(PTHREAD)
 
 philosophers: philosophers.c
-	gcc $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^
 
 clean:
 	rm -f philosophers
+
+.PHONY: all clean

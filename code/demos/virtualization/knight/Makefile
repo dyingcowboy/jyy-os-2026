@@ -1,3 +1,5 @@
+include ../../../mk/demo.mk
+
 CXXFLAGS := -Wall -g -std=c++20
 
 SRCS := $(wildcard *.cc)
@@ -7,7 +9,7 @@ OBJS := $(SRCS:.cc=)
 all: $(OBJS)
 
 %: %.cc
-	g++ $(CXXFLAGS) $< -o $@
+	$(CXX) $(CXXFLAGS) $< -o $@
 
 clean:
 	rm -f $(OBJS)

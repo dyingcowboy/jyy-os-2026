@@ -1,7 +1,17 @@
+include ../../../../mk/demo.mk
+
+# 交叉编译 aarch64 裸机程序：需要 aarch64-linux-gnu 工具链和 qemu-system-aarch64。
+# macOS 上没有这套工具链，make 会打印跳过说明。
+ifeq ($(shell command -v aarch64-linux-gnu-gcc 2>/dev/null),)
+DEMO_SKIP_REASON := 需要 aarch64-linux-gnu 交叉工具链与 qemu-system-aarch64
+$(eval $(call skip_demo))
+else
 CC = aarch64-linux-gnu-gcc
 LD = aarch64-linux-gnu-ld
 OBJCOPY = aarch64-linux-gnu-objcopy
 QEMU = qemu-system-aarch64
+
+all: kernel.bin
 
 kernel.bin: start.S
 	$(CC) -c $< -o start.o -march=armv8-a -nostdlib -fno-asynchronous-unwind-tables
@@ -14,4 +24,5 @@ run: kernel.bin
 clean:
 	rm -f start.o kernel.elf kernel.bin
 
-.PHONY: run clean
+.PHONY: all run clean
+endif

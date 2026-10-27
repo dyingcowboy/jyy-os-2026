@@ -11,6 +11,31 @@
 
 Lect.30 是课程总结，其中重新列出了全课程 demo。为避免把所有代码都误标为“Lect.30 首次出现”，`LECTURES.md` 和 `MANIFEST.tsv` 使用 Lect.1–29 的实际出现位置，并把 Lect.30 标记为总索引。
 
+## 如何构建
+
+在 `code/` 目录下：
+
+```sh
+make            # 构建所有能在当前平台构建的 demo
+make -j8        # 并行构建
+make status     # 查看每个 demo 在本机的构建状态
+make clean      # 清理全部构建产物
+make concurrency/peterson   # 只构建某一个 demo
+```
+
+也可以进入任意 demo 目录单独 `make`，例如 `cd demos/concurrency/peterson && make`。
+
+统一配置放在 [`mk/demo.mk`](mk/demo.mk)，各 demo 的 `Makefile` 用相对路径引入它，因此：
+
+- 编译器统一取 `$(CC)` / `$(CXX)`，可用 `make CC=gcc-14` 覆盖；
+- `TLIB_PATH` 默认指向 `demos/concurrency/thread-lib`，不再需要手动 export；
+- 用到 pthread 的 demo 统一加 `-pthread`。
+
+目录里有一部分 demo 依赖 Linux 专属接口、交叉工具链或外部程序（KVM、bpftrace、CUDA、
+RISC-V/aarch64 交叉工具链、musl、qemu 等），在 macOS 上 `make` 会打印一行中文的
+`[跳过]` 说明并以成功状态退出，`make status` 里标记为“跳过”；同一份 Makefile 在
+满足条件的 Linux 环境下仍按原规则构建。
+
 ## 收录范围
 
 收录讲义明确链接到 `/OS/demos/` 的课堂演示，包括源码、Makefile、README、脚本、示例资源和目录中已有的少量构建产物。未收录以下内容：

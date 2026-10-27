@@ -1,10 +1,14 @@
+include ../../../mk/demo.mk
+
 all: hanoi-r hanoi-nr
 
 hanoi-r: hanoi-main.c hanoi-r.c
-	gcc -g -o $@ $^
+	$(CC) -g -o $@ $^
 
 hanoi-nr: hanoi-main.c hanoi-nr.c
-	gcc -g -o $@ $^
+	$(CC) -g -o $@ $^
 
 clean:
 	rm -f hanoi-r hanoi-nr
+
+.PHONY: all clean
